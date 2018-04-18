@@ -5,6 +5,9 @@ TagManager:
   serializedVersion: 2
   tags:
   - BaseField
+  - Canvas
+  - Hook
+  - Hand1
   layers:
   - Default
   - TransparentFX
@@ -14,7 +17,7 @@ TagManager:
   - UI
   - 
   - 
-  - 
+  - Hook
   - 
   - 
   - 
@@ -47,4 +50,7 @@ TagManager:
     locked: 0
   - name: Lower Map
     uniqueID: 3785616819
+    locked: 0
+  - name: Hook
+    uniqueID: 1133574795
     locked: 0

@@ -34,7 +34,7 @@ public class Board : MonoBehaviour {
         // TODO:
         // use raycast to get grid position
         // and update hoveredTile according to mouse position
-        Debug.Log("UpdateMouseOver");
+        
         if (!Camera.main) {
             Debug.LogError("Somehow main camera is not set");
             return;
@@ -47,7 +47,7 @@ public class Board : MonoBehaviour {
         // convert mouse click's position to Grid position
         Vector3 cellPosition = grid.WorldToCell(pz) + boardOffset;
 
-        Debug.Log(cellPosition.x + "," + cellPosition.y * -1);
+        
 
     }
 
