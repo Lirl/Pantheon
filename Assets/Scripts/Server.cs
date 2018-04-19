@@ -156,7 +156,7 @@ public class Server : MonoBehaviour
             case "CSETTILE":
                 // "SETTILE|" + alliance +"|" + x +"|" + y "SETTILE|0|8|12
                 //Board.Instance.SetTileAlliance(int.Parse(aData[1]), int.Parse(aData[2]), int.Parse(aData[3]));
-                Broadcast("SETTILE|" + int.Parse(aData[1]) + "|" + int.Parse(aData[2]) + "|" +int.Parse(aData[3]), clients);
+                Broadcast("SSETTILE|" + int.Parse(aData[1]) + "|" + int.Parse(aData[2]) + "|" +int.Parse(aData[3]), clients);
                 break;
             case "CRELEASEDISK":
                 Broadcast("SRELEASEDISK|" + int.Parse(aData[1]) + "|" + double.Parse(aData[2]) + "|" + double.Parse(aData[3]), clients);
@@ -164,8 +164,8 @@ public class Server : MonoBehaviour
             case "CCREATEDISK":
                 Broadcast("SCREATEDISK|" + int.Parse(aData[1]), clients);
                 break;
-            case "SSTARTTURN":
-
+            case "CSTARTTURN":
+                Broadcast("SSTARTTURN", clients);
                 break;
             case "CMSG":
                 Broadcast("SMSG|" + c.clientName + " : " + aData[1],clients);

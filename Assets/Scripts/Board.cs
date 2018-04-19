@@ -32,6 +32,7 @@ public class Board : MonoBehaviour
     private float winTime;
 
     private bool isZoomedOut = false;
+    private bool isZoomedIn = false;
 
     public int TurnCounter = 0;
 
@@ -45,7 +46,7 @@ public class Board : MonoBehaviour
         client.Send("CRELEASEDISK|" + disk.Alliance + "|" + pos.x + "|" + pos.z);
     }
 
-    private bool isHostTurn;
+    private bool isYourTurn;
     private bool hasKilled;
 
     private Vector2 mouseOver;
@@ -57,6 +58,7 @@ public class Board : MonoBehaviour
     public GameObject[] CurrentCharacter = new GameObject[2];
 
     private Client client;
+    
 
     private void Start()
     {
@@ -82,39 +84,36 @@ public class Board : MonoBehaviour
         // Client player has its camera rotate 180 degrees
         if(!isHost) {
             Camera.main.transform.rotation = Quaternion.Euler(90, 180, 0);
-            isZoomedOut = true;
-
         }
 
-        // Host starts
-        isHostTurn = true;
+        // Host starts(Trust me dont change that)
+        isYourTurn = !isHost;
 
         GenerateBoard();
         StartTurn();
     }
 
     public void StartTurn() {
-        // e.g. host is 1, therefore starts as turnCounter starts at 1
-        var player = (isHostTurn ? 1 : 0);
-        Debug.Log("Start Turn " + TurnCounter);
-        if ((isHost && isHostTurn) || (!isHost && !isHostTurn)) {
+        TurnCounter++;
+        isYourTurn = !isYourTurn;
+        Debug.Log("Player " + (isYourTurn ? 1 : 2) + " turn #" + TurnCounter);
+        if (isYourTurn) {
             if (Hand) {
+                Alert("Setting Hand ACTIVE for " + (isHost ? 1 : 2) + " turn #" + TurnCounter);
                 Hand.SetActive(true);
             }
+            isZoomedOut = true;
         } else {
             if (Hand) {
+                Alert("Setting Hand NOT-ACTIVE for " + (isHost ? 1 : 2) + " turn #" + TurnCounter);
                 Hand.SetActive(false);
             }
+            isZoomedIn = true;
         }
     }
 
     public void CreateSelectedDisk() {
-        client.Send("CCREATEDISK|" + (isHostTurn ? 1 : 0));
-        if (Hand) {
-            Hand.SetActive(false);
-        }
-
-        isZoomedOut = true;
+        client.Send("CCREATEDISK|" + (isHost ? 1 : 0));
     }
 
     private void Update()
@@ -134,26 +133,36 @@ public class Board : MonoBehaviour
             }
         }
 
+        if (isZoomedIn) {
+            if (Camera.main.orthographicSize <= 75) {
+                Camera.main.orthographicSize += 0.5f;
+            } else {
+                isZoomedIn = false;
+            }
+        }
+
         UpdateAlert();
         UpdateMouseOver();
     }
 
     internal void ReleaseDisk(int alliance, float x, float y) {
         // If the disk is yours, you already got that effect
-        if(alliance == (isHost ? 1 : 0)) {
-            return;
+        if (alliance != (isHost ? 1 : 0)) {
+            // Alliance is of the opposing player
+            // therefore we should play his move by moving his piece to according to his mouse position
+            // and releasing
+            GameObject disk = CurrentCharacter[alliance];
+            if (!disk) {
+                Debug.LogError("Release disk: Could not release disk of player " + alliance + " since its undefined");
+            }
+            disk.GetComponent<Disk>().SetPositionAndRelease(new Vector3(x, 0, y));
+        } else {
+            // This is the player that played the move
+            // He should end the turn
+            EndTurn();
         }
 
-        // Alliance is of the opposing player
-        // therefore we should play his move by moving his piece to according to his mouse position
-        // and releasing
-        GameObject disk = CurrentCharacter[alliance];
-        if(!disk) {
-            Debug.LogError("Release disk: Could not release disk of player " + alliance + " since its undefined");
-        }
-        disk.GetComponent<Disk>().SetPositionAndRelease(new Vector3(x, 0, y));
-
-
+        
     }
 
     internal GameObject CreateDisk(int alliance) {
@@ -169,6 +178,14 @@ public class Board : MonoBehaviour
         ins.GetComponent<SpringJoint>().connectedBody = hook.GetComponent<Rigidbody>();
         ins.GetComponent<Disk>().Init(alliance);
         CurrentCharacter[alliance] = ins;
+
+        // Handle UI
+        if (Hand) {
+            Hand.SetActive(false);
+        }
+
+        isZoomedOut = true;
+
         return ins;
     }
 
@@ -221,20 +238,22 @@ public class Board : MonoBehaviour
     }*/
 
 
-    IEnumerator EndTurnAfter(int seconds) {
+    IEnumerator EndTurnAfter() {
         yield return new WaitForSeconds(5);
         EndTurn();
     }
 
     private void EndTurn()
     {
+        Debug.Log("EndTurn");
         var found = CheckVictory();
+        Debug.Log("After looking for victor " + found);
 
-        if(found) {
+        if (found) {
             return;
         }
 
-        isHostTurn = !isHostTurn;
+        Debug.Log("Winner not found");
         client.Send("CSTARTTURN");
     }
 
@@ -321,6 +340,8 @@ public class Board : MonoBehaviour
     }
 
     private bool CheckVictory() {
+        return false;
+        // Something wrong in this code:
         for (int i = 0; i < Score.Length; i++) {
             if(Score[i]/MaxScore >= WinScoreThreshold) {
                 client.Send("CPLAYERWON|" + i);
