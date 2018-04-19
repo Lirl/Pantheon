@@ -61,6 +61,7 @@ public class Client : MonoBehaviour
     // Sending messaged to the server
     public void Send(string data)
     {
+        Debug.Log("Client Send: " + data);
         if (!socketReady)
             return;
 
@@ -91,8 +92,17 @@ public class Client : MonoBehaviour
                 //Board.Instance.SetTileAlliance(int.Parse(aData[1]), int.Parse(aData[2]), int.Parse(aData[3]));
                 Board.Instance.CreateDisk(float.Parse(aData[2]), float.Parse(aData[3]));
                 break;
+
             case "SRELEASEDISK":
-                Board.Instance.ReleaseDisk(int.Parse(aData[1]), int.Parse(aData[2]), int.Parse(aData[3]));
+                Board.Instance.ReleaseDisk(int.Parse(aData[1]), float.Parse(aData[2]), float.Parse(aData[3]));
+                break;
+            case "SCREATEDISK":
+                // Create a disk for aData[1] player
+                Board.Instance.CreateDisk(int.Parse(aData[1]));
+                break;
+            case "SSTARTTURN":
+                // Create a disk for aData[1] player
+                Board.Instance.StartTurn();
                 break;
             case "SMSG":
                 Board.Instance.ChatMessage(aData[1]);

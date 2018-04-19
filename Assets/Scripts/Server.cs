@@ -161,6 +161,12 @@ public class Server : MonoBehaviour
             case "CRELEASEDISK":
                 Broadcast("SRELEASEDISK|" + int.Parse(aData[1]) + "|" + double.Parse(aData[2]) + "|" + double.Parse(aData[3]), clients);
                 break;
+            case "CCREATEDISK":
+                Broadcast("SCREATEDISK|" + int.Parse(aData[1]), clients);
+                break;
+            case "SSTARTTURN":
+
+                break;
             case "CMSG":
                 Broadcast("SMSG|" + c.clientName + " : " + aData[1],clients);
                 break;

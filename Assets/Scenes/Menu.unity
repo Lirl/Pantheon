@@ -420,11 +420,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mainMenu: {fileID: 842387894}
-  serverMenu: {fileID: 0}
-  connectMenu: {fileID: 0}
-  serverPrefab: {fileID: 0}
-  clientPrefab: {fileID: 0}
-  nameInput: {fileID: 0}
+  serverMenu: {fileID: 2068239760}
+  connectMenu: {fileID: 175707283}
+  serverPrefab: {fileID: 1466012374015314, guid: 88848ff023360bd499405384a1ba8cba,
+    type: 2}
+  clientPrefab: {fileID: 1717256092253214, guid: fe74c47eae97bc146bb0c0483c8a7be0,
+    type: 2}
+  nameInput: {fileID: 1779117566}
 --- !u!4 &228623509
 Transform:
   m_ObjectHideFlags: 0
@@ -716,8 +718,8 @@ RectTransform:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 265281053}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 476, y: 291, z: 0}
-  m_LocalScale: {x: 0.74375, y: 0.74375, z: 0.74375}
+  m_LocalPosition: {x: 476.5, y: 291, z: 0}
+  m_LocalScale: {x: 0.7445313, y: 0.7445313, z: 0.7445313}
   m_Children:
   - {fileID: 842387895}
   - {fileID: 175707284}
@@ -1141,7 +1143,7 @@ RectTransform:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 842387894}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -73, y: -72.26053, z: 0}
+  m_LocalPosition: {x: -73, y: -71.849945, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 1843704445}
@@ -3236,7 +3238,6 @@ GameObject:
   - component: {fileID: 2140520044}
   - component: {fileID: 2140520043}
   - component: {fileID: 2140520042}
-  - component: {fileID: 2140520047}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -3313,14 +3314,3 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2140520047
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 2140520041}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 688a7a6e9a922e947827d51f0def3001, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 

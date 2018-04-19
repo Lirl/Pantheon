@@ -5,8 +5,14 @@ using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using System;
 
-public class Board : MonoBehaviour {
+public class Board : MonoBehaviour
+{
     public static Board Instance { set; get; }
+    public int MaxScore { get; private set; }
+    public GameObject Hand;
+
+    public double WinScoreThreshold = 0.8; // you need 80% control over the board
+
     public const int MAP_WIDTH = 59;
     public const int MAP_HEIGHT = 89;
 
@@ -25,10 +31,20 @@ public class Board : MonoBehaviour {
     private bool gameIsOver;
     private float winTime;
 
+    private bool isZoomedOut = false;
+
+    public int TurnCounter = 0;
+
     private Vector3 boardOffset = new Vector3(29.0f, 0, 44.0f);
     private Vector3 pieceOffset = new Vector3(0.5f, 0.125f, 0.5f);
 
     public bool isHost;
+
+    internal void OnDiskReleased(Disk disk) {
+        var pos = disk.gameObject.transform.position;
+        client.Send("CRELEASEDISK|" + disk.Alliance + "|" + pos.x + "|" + pos.z);
+    }
+
     private bool isHostTurn;
     private bool hasKilled;
 
@@ -36,111 +52,132 @@ public class Board : MonoBehaviour {
     private Vector2 startDrag;
     private Vector2 endDrag;
 
+    public Text MessageBox;
+
     public GameObject[] CurrentCharacter = new GameObject[2];
 
     private Client client;
 
-    private void Start() {
+    private void Start()
+    {
         Instance = this;
         client = FindObjectOfType<Client>();
+        Hand = GameObject.Find("Hand");
 
-        alertCanvas = GameObject.Find("Canvas").GetComponent<CanvasGroup>();
+        alertCanvas = GameObject.Find("MessageCanvas").GetComponent<CanvasGroup>();
 
-        if (highlightsContainer) {
+        /*if (highlightsContainer) {
             foreach (Transform t in highlightsContainer.transform) {
                 t.position = Vector3.down * 100;
             }
-        }
+        }*/
 
-        if (client) {
+        if (client)
+        {
             isHost = client.isHost;
-            Alert(client.players[0].name + " versus " + client.players[1].name);
-        } else {
-            // Informing player and enable UI
-            /*Alert(client.players[0].name + " player's turn");
-            Transform c = GameObject.Find("Canvas").transform;
-            foreach (Transform t in c)
-            {
-                t.gameObject.SetActive(false);
-            }
-
-            c.GetChild(0).gameObject.SetActive(true);
-            */
-
+            //Alert(client.players[0].name + " versus " + client.players[1].name);
+            Alert(isHost ? "I am Host" : "I am Client");
         }
-
 
         // Client player has its camera rotate 180 degrees
-        if (!isHost) {
+        if(!isHost) {
             Camera.main.transform.rotation = Quaternion.Euler(90, 180, 0);
+            isZoomedOut = true;
+
         }
 
+        // Host starts
         isHostTurn = true;
+
         GenerateBoard();
+        StartTurn();
     }
 
-    public void SendDiskRelease(Vector3 position) {
-        if (client) {
-            client.Send("CRELEASEDISK|" + (isHost ? 1 : 0) + "|" + position.x + "|" + position.z);
-        }
-    }
-
-    private void Update() {
-        if (Input.GetMouseButtonDown(0)) {
-            SetTileAlliance((isHost ? 0 : 1), (int)mouseOver.x, (int)mouseOver.y);
-            // Your turn
-            //if ((isHost && isHostTurn) || (!isHost && !isHostTurn)) {
-            //client.Send("SETTILE|" + (isHost ? 0 : 1) + "|" + mouseOver.x + "|" + mouseOver.y);
-            //}
-        }
-
-        if (gameIsOver) {
-            if (Time.time - winTime > 3.0f) {
-                Server server = FindObjectOfType<Server>();
-                Client client = FindObjectOfType<Client>();
-
-                if (server)
-                    Destroy(server.gameObject);
-
-                if (client)
-                    Destroy(client.gameObject);
-
-                SceneManager.LoadScene("Menu");
+    public void StartTurn() {
+        // e.g. host is 1, therefore starts as turnCounter starts at 1
+        var player = (isHostTurn ? 1 : 0);
+        Debug.Log("Start Turn " + TurnCounter);
+        if ((isHost && isHostTurn) || (!isHost && !isHostTurn)) {
+            if (Hand) {
+                Hand.SetActive(true);
             }
+        } else {
+            if (Hand) {
+                Hand.SetActive(false);
+            }
+        }
+    }
 
-            return;
+    public void CreateSelectedDisk() {
+        client.Send("CCREATEDISK|" + (isHostTurn ? 1 : 0));
+        if (Hand) {
+            Hand.SetActive(false);
+        }
+
+        isZoomedOut = true;
+    }
+
+    private void Update()
+    {
+        if(Input.GetMouseButtonDown(0)) {
+            
+            //ShowMessage("Click x: " + mouseOver.x + " : " + mouseOver.y);
+
+            SetTileAlliance((isHost ? 0 : 1), (int)mouseOver.x, (int)mouseOver.y);
+        }
+
+        if (isZoomedOut) {
+            if (Camera.main.orthographicSize >= 45) {
+                Camera.main.orthographicSize -= 0.5f;
+            } else {
+                isZoomedOut = false;
+            }
         }
 
         UpdateAlert();
         UpdateMouseOver();
-
-        if ((isHost) ? isHostTurn : !isHostTurn) {
-            int x = (int)mouseOver.x;
-            int y = (int)mouseOver.y;
-        }
     }
 
     internal void ReleaseDisk(int alliance, float x, float y) {
-        if (alliance == (isHost ? 1 : 0)) {
+        // If the disk is yours, you already got that effect
+        if(alliance == (isHost ? 1 : 0)) {
             return;
         }
 
         // Alliance is of the opposing player
         // therefore we should play his move by moving his piece to according to his mouse position
         // and releasing
-
         GameObject disk = CurrentCharacter[alliance];
+        if(!disk) {
+            Debug.LogError("Release disk: Could not release disk of player " + alliance + " since its undefined");
+        }
         disk.GetComponent<Disk>().SetPositionAndRelease(new Vector3(x, 0, y));
+
+
+    }
+
+    internal GameObject CreateDisk(int alliance) {
+        GameObject hook;
+        if(alliance == 1) {
+            hook = GameObject.Find("HostHook");
+        } else {
+            hook = GameObject.Find("ClientHook");
+        }
+
+        var ins = Instantiate(DummyDisk, hook.transform.position, Quaternion.identity);
+        ins.GetComponent<SpringJoint>().connectedAnchor = hook.transform.position;
+        ins.GetComponent<SpringJoint>().connectedBody = hook.GetComponent<Rigidbody>();
+        ins.GetComponent<Disk>().Init(alliance);
+        CurrentCharacter[alliance] = ins;
+        return ins;
     }
 
     internal GameObject CreateDisk(float x, float y) {
         return Instantiate(DummyDisk, new Vector3(x, 0, y) - boardOffset, Quaternion.identity);
     }
-
     internal GameObject CreateDisk(GameObject go, int x, int y) {
         return Instantiate(go, new Vector3(x, 0, y) - boardOffset, Quaternion.identity);
     }
-
     internal GameObject CreateDisk(GameObject go, Vector3 position) {
         Debug.Log("Creating disk " + position);
         var ins = Instantiate(go, position, Quaternion.identity);
@@ -148,54 +185,61 @@ public class Board : MonoBehaviour {
         return ins;
     }
 
-    private void UpdateMouseOver() {
-        if (!Camera.main) {
+    private void UpdateMouseOver()
+    {
+        if (!Camera.main)
+        {
             Debug.Log("Unable to find main camera");
             return;
         }
 
         RaycastHit hit;
-        if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit, 50.0f, LayerMask.GetMask("Board"))) {
+        if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit, 50.0f, LayerMask.GetMask("Board")))
+        {
             mouseOver.x = (int)(hit.point.x + boardOffset.x);
             mouseOver.y = (int)((hit.point.z + -1 * boardOffset.z) * -1);
-        } else {
+        }
+        else
+        {
             mouseOver.x = -1;
             mouseOver.y = -1;
         }
     }
+    /*private void UpdatePieceDrag(Piece p)
+    {
+        if (!Camera.main)
+        {
+            Debug.Log("Unable to find main camera");
+            return;
+        }
 
-    private void EndTurn() {
-        if (client) {
-            string msg = "CMOV|";
-            msg += startDrag.x.ToString() + "|";
-            msg += startDrag.y.ToString() + "|";
-            msg += endDrag.x.ToString() + "|";
-            msg += endDrag.y.ToString();
+        RaycastHit hit;
+        if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit, 25.0f, LayerMask.GetMask("Board")))
+        {
+            p.transform.position = hit.point + Vector3.up;
+        }
+    }*/
 
-            client.Send(msg);
+
+    IEnumerator EndTurnAfter(int seconds) {
+        yield return new WaitForSeconds(5);
+        EndTurn();
+    }
+
+    private void EndTurn()
+    {
+        var found = CheckVictory();
+
+        if(found) {
+            return;
         }
 
         isHostTurn = !isHostTurn;
-        CheckVictory();
+        client.Send("CSTARTTURN");
     }
-    private void CheckVictory() {
-        return;
-        // TODO: create win condition
-        /*var ps = FindObjectsOfType<Piece>();
-        bool hasWhite = false, hasBlack = false;
-        for (int i = 0; i < ps.Length; i++) {
-            if (ps[i].isWhite)
-                hasWhite = true;
-            else
-                hasBlack = true;
-        }
 
-        if (!hasWhite)
-            Victory(false);
-        if (!hasBlack)
-            Victory(true);*/
-    }
-    private void Victory(bool isWhite) {
+    private void Victory(bool isWhite)
+    {
         winTime = Time.time;
 
         if (isWhite)
@@ -205,7 +249,7 @@ public class Board : MonoBehaviour {
 
         gameIsOver = true;
     }
-
+ 
     /*private void Highlight()
     {
         foreach (Transform t in highlightsContainer.transform)
@@ -220,10 +264,13 @@ public class Board : MonoBehaviour {
             highlightsContainer.transform.GetChild(1).transform.position = forcedPieces[1].transform.position + Vector3.down * 0.1f;
     }*/
 
-    private void GenerateBoard() {
+    private void GenerateBoard()
+    {
         // Reset score
         Score[0] = 0;
         Score[1] = 0;
+
+        MaxScore = MAP_WIDTH * MAP_HEIGHT;
 
         // fill 2D Array with -1
         for (int row = 0; row < MAP_WIDTH; row++) {
@@ -235,11 +282,11 @@ public class Board : MonoBehaviour {
 
     public void SetTileAlliance(int alliance, int x, int y) {
 
-        if (x == -1 || y == -1) {
+        if(x == -1 || y == -1) {
             return;
         }
 
-        if (Tiles[x, y] != -1) {
+        if(Tiles[x, y] != -1) {
             Tiles[x, y] = alliance;
         }
 
@@ -249,26 +296,43 @@ public class Board : MonoBehaviour {
         Debug.Log("Tile " + x + "," + y + " was set with " + alliance);
     }
 
-    public void Alert(string text) {
+    public void Alert(string text)
+    {
         // TODO: create text to display information
         alertCanvas.GetComponentInChildren<Text>().text = text;
         alertCanvas.alpha = 1;
         lastAlert = Time.time;
         alertActive = true;
     }
-    public void UpdateAlert() {
-        if (alertActive) {
-            if (Time.time - lastAlert > 1.5f) {
+    public void UpdateAlert()
+    {
+        if (alertActive)
+        {
+            if (Time.time - lastAlert > 1.5f)
+            {
                 alertCanvas.alpha = 1 - ((Time.time - lastAlert) - 1.5f);
 
-                if (Time.time - lastAlert > 2.5f) {
+                if (Time.time - lastAlert > 2.5f)
+                {
                     alertActive = false;
                 }
             }
         }
     }
 
-    public void ChatMessage(string msg) {
+    private bool CheckVictory() {
+        for (int i = 0; i < Score.Length; i++) {
+            if(Score[i]/MaxScore >= WinScoreThreshold) {
+                client.Send("CPLAYERWON|" + i);
+                return true;
+            }
+        }
+
+        return true;
+    }
+
+    public void ChatMessage(string msg)
+    {
         GameObject go = Instantiate(messagePrefab) as GameObject;
         go.transform.SetParent(chatMessageContainer);
 
@@ -280,7 +344,8 @@ public class Board : MonoBehaviour {
         i.text = message;
     }
 
-    public void SendChatMessage() {
+    public void SendChatMessage()
+    {
         InputField i = GameObject.Find("MessageInput").GetComponent<InputField>();
 
         if (i.text == "")

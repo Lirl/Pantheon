@@ -94,6 +94,7 @@ public class GameManager : MonoBehaviour
 
     public void StartGame()
     {
+        Debug.Log("about to load main");
         SceneManager.LoadScene("Main");
     }
 }

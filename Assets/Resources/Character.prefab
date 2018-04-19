@@ -546,12 +546,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Rigidbody: {fileID: 54603216359815802}
-  SJ: {fileID: 0}
+  SpringJoint: {fileID: 0}
   releaseTime: 0.15
   cameraAdjuster: 0.5
   endTurn: 1
-  alliance: 0
-  Hand: {fileID: 0}
+  SJ: {fileID: 0}
+  mesh: {fileID: 0}
+  Alliance: 0
 --- !u!120 &120795468386395288
 LineRenderer:
   m_ObjectHideFlags: 1

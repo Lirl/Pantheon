@@ -8,35 +8,40 @@ public class Disk : MonoBehaviour {
     private bool isMouseDown = false;
     private bool zoomOut = false;
     public Rigidbody Rigidbody;
-    public SpringJoint SJ;
+    public SpringJoint SpringJoint;
     public float releaseTime = 0.15f;
     public float cameraAdjuster;
     public float endTurn;
-    public int alliance;
-    public GameObject Hand;
-    MeshRenderer mesh;
+
     LineRenderer line;
+    public SpringJoint SJ;
+    public MeshRenderer mesh;
+
+    public int Alliance;
 
     private void Awake() {
         line = GetComponent<LineRenderer>();
         SJ = GetComponent<SpringJoint>();
         line.enabled = false;
+    }
+
+    public void Init(int alliance) {
+        Alliance = alliance;
         mesh = SJ.connectedBody.GetComponent<MeshRenderer>();
         line.SetPosition(0, SJ.connectedBody.position);
     }
 
-    private void Start() {
-        
-    }
-
     private void Update() {
-        if (isMouseDown) { 
+        if (isMouseDown) {
             Rigidbody.position = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            if(line) {
+            if (line) {
                 line.SetPosition(1, Rigidbody.position);
             }
             ZoomInCamera();
         } 
+        if (zoomOut) {
+            ZoomOutCamera();
+        }
     }
 
     private void OnMouseDown() {
@@ -47,12 +52,12 @@ public class Disk : MonoBehaviour {
     }
 
     private void OnMouseUp() {
-        isMouseDown = false;
-        Board.Instance.SendDiskRelease(transform.position);
+        Board.Instance.OnDiskReleased(this);
         Release();
     }
 
     public void Release() {
+        isMouseDown = false;
         Rigidbody.isKinematic = false;
         if (line) {
             Destroy(line);
@@ -61,6 +66,7 @@ public class Disk : MonoBehaviour {
     }
 
     public void SetPositionAndRelease(Vector3 position) {
+        Debug.Log("SetPositionAndRelease : " + position);
         transform.position = position;
         Release();
     }
@@ -71,15 +77,12 @@ public class Disk : MonoBehaviour {
         Destroy(GetComponent<SpringJoint>());
         yield return new WaitForSeconds(endTurn);
         zoomOut = true;
-        if (Hand) {
-            Hand.SetActive(true);
-        }
     }
 
     private void ZoomInCamera () {
         if (Camera.main.orthographicSize <= 75) {
             Camera.main.orthographicSize += cameraAdjuster;
-        } 
+        }
     }
 
     private void ZoomOutCamera () {
