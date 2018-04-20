@@ -87,12 +87,6 @@ public class Client : MonoBehaviour
             case "SCNN":
                 UserConnected(aData[1], false);
                 break;
-            case "SETTILE":
-                // "SETTILE|" + alliance +"|" + x +"|" + y "SETTILE|0|8|12
-                //Board.Instance.SetTileAlliance(int.Parse(aData[1]), int.Parse(aData[2]), int.Parse(aData[3]));
-                //Board.Instance.CreateDisk(float.Parse(aData[2]), float.Parse(aData[3]));
-                break;
-
             case "SRELEASEDISK":
                 Board.Instance.ReleaseDisk(int.Parse(aData[1]), float.Parse(aData[2]), float.Parse(aData[3]));
                 break;
@@ -106,6 +100,9 @@ public class Client : MonoBehaviour
                 break;
             case "SDISTROYDISK":
                 Board.Instance.HandleDestroyDisk(int.Parse(aData[1]));
+                break;
+            case "SSETTILE":
+                Board.Instance.HandleSetTileAlliance(int.Parse(aData[1]), int.Parse(aData[2]), int.Parse(aData[3]));
                 break;
             case "SMSG":
                 Board.Instance.ChatMessage(aData[1]);

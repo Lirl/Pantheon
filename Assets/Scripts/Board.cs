@@ -101,6 +101,23 @@ public class Board : MonoBehaviour {
 
         GenerateBoard();
         StartTurn();
+
+        if(isHost) {
+            Invoke("CheckWinner", 30);
+        }
+    }
+
+    public void CheckWinner() {
+
+        if(Score[0] == Score[1]) {
+            Debug.Log("Tie! 1 : " + Score[0] + " 2 : " + Score[1]);
+        } else if (Score[0] > Score[1]) {
+            Debug.Log("Player 2 is the winner! with a score of " + Score[0] + " . (opponent score is " + Score[1] + ")");
+        }else {
+            Debug.Log("Player 1 is the winner! with a score of " + Score[1] + " . (opponent score is " + Score[0] + ")");
+        }
+
+        gameIsOver = true;
     }
 
     internal void OnDiskClick(Disk disk) {
@@ -109,21 +126,26 @@ public class Board : MonoBehaviour {
     }
 
     public void StartTurn() {
+        if(gameIsOver) {
+            return;
+        }
+
         TurnCounter++;
         isYourTurn = !isYourTurn;
+
         Debug.Log("Player " + (isYourTurn ? 1 : 2) + " turn #" + TurnCounter);
         if (isYourTurn) {
             // Add a new card to player hand (current turn)
             DrawCard();
 
             if (Hand) {
-                Alert("Setting Hand ACTIVE for " + (isHost ? 1 : 2) + " turn #" + TurnCounter);
+                Debug.Log("Setting Hand ACTIVE for " + (isHost ? 1 : 2) + " turn #" + TurnCounter);
                 Hand.SetActive(true);
             }
             isZoomedOut = true;
         } else {
             if (Hand) {
-                Alert("Setting Hand NOT-ACTIVE for " + (isHost ? 1 : 2) + " turn #" + TurnCounter);
+                Debug.Log("Setting Hand NOT-ACTIVE for " + (isHost ? 1 : 2) + " turn #" + TurnCounter);
                 Hand.SetActive(false);
             }
         }
@@ -168,6 +190,10 @@ public class Board : MonoBehaviour {
         button.transform.parent = null;
         Destroy(button);
 
+        if(Hand) {
+            Hand.SetActive(false);
+        }
+        
         if(client) {
             Debug.Log("Fire CCREATEDISK");
             client.Send("CCREATEDISK|" + (isHost ? 1 : 0) + "|" + code);
@@ -181,7 +207,7 @@ public class Board : MonoBehaviour {
 
             //ShowMessage("Click x: " + mouseOver.x + " : " + mouseOver.y);
 
-            SetTileAlliance((isHost ? 0 : 1), (int)mouseOver.x, (int)mouseOver.y);
+            //SetTileAlliance((isHost ? 0 : 1), (int)mouseOver.x, (int)mouseOver.y);
         }
 
         if (isZoomedIn) {
@@ -319,14 +345,14 @@ public class Board : MonoBehaviour {
 
     private void EndTurn() {
         Debug.Log("EndTurn");
-        var found = CheckVictory();
+        /*var found = CheckVictory();
         Debug.Log("After looking for victor " + found);
 
         if (found) {
             return;
         }
 
-        Debug.Log("Winner not found");
+        Debug.Log("Winner not found");*/
         if(client) {
             client.Send("CSTARTTURN");
         } else {
@@ -334,6 +360,7 @@ public class Board : MonoBehaviour {
         }
         
     }
+
 
     private void Victory(bool isWhite) {
         winTime = Time.time;
@@ -406,13 +433,33 @@ public class Board : MonoBehaviour {
     }
 
     public void SetTileAlliance(int alliance, int x, int y) {
+        if(client) {
+            if(isYourTurn) {
+                client.Send("CSETTILE|" + alliance + "|" + x + "|" + y);
+            }
+        } else {
+            HandleSetTileAlliance(alliance, x, y);
+        }
+    }
 
+    public void HandleSetTileAlliance(int alliance, int x, int y) {
+        Debug.Log("HandleSetTileAlliance " + alliance + " x: " + x + " y: " + y);
         if (x == -1 || y == -1) {
             return;
         }
 
         if (Tiles[x, y]) {
-            Tiles[x, y].GetComponent<Cube>().SetAlliance(alliance);
+            var cube = Tiles[x, y].GetComponent<Cube>();
+            if(cube.Alliance != alliance) {
+                if(cube.Alliance != -1) {
+                    Score[cube.Alliance]--;
+                    Score[alliance]++;
+                } else {
+                    
+                    Score[alliance]++;
+                }
+                cube.SetAlliance(alliance);
+            }
         }
 
         Score[alliance]++;

@@ -117,6 +117,7 @@ public class Server : MonoBehaviour
     // Server Send
     private void Broadcast(string data, List<ServerClient> cl)
     {
+        Debug.Log("Server Broadcast: " + data);
         foreach (ServerClient sc in cl)
         {
             try
@@ -153,11 +154,6 @@ public class Server : MonoBehaviour
             case "CMOV":
                 Broadcast("SMOV|" + aData[1] + "|" + aData[2] + "|" + aData[3] + "|" + aData[4],clients);
                 break;
-            case "CSETTILE":
-                // "SETTILE|" + alliance +"|" + x +"|" + y "SETTILE|0|8|12
-                //Board.Instance.SetTileAlliance(int.Parse(aData[1]), int.Parse(aData[2]), int.Parse(aData[3]));
-                Broadcast("SSETTILE|" + int.Parse(aData[1]) + "|" + int.Parse(aData[2]) + "|" +int.Parse(aData[3]), clients);
-                break;
             case "CRELEASEDISK":
                 Broadcast("SRELEASEDISK|" + int.Parse(aData[1]) + "|" + double.Parse(aData[2]) + "|" + double.Parse(aData[3]), clients);
                 break;
@@ -169,6 +165,9 @@ public class Server : MonoBehaviour
                 break;
             case "CDISTROYDISK":
                 Broadcast("SDISTROYDISK|" + int.Parse(aData[1]), clients);
+                break;
+            case "CSETTILE":
+                Broadcast("SSETTILE|" + int.Parse(aData[1]) + "|" + int.Parse(aData[2]) + "|" + int.Parse(aData[3]), clients);
                 break;
             case "CMSG":
                 Broadcast("SMSG|" + c.clientName + " : " + aData[1],clients);

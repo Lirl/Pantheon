@@ -24,7 +24,7 @@ public class Disk : MonoBehaviour {
     public int Attack = 1;
     public int Id = -1;
 
-    public bool Enable = true; // when disabled, block any mouse interaction with this game object
+    public bool Enable = false; // when disabled, block any mouse interaction with this game object
 
     private static int _idCounter = 0;
     public static int GenerateId() {
@@ -85,6 +85,8 @@ public class Disk : MonoBehaviour {
         if (!Enable) {
             return;
         }
+
+        Enable = false;
 
         isMouseDown = false;
         var pos = transform.position;

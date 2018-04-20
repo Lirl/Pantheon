@@ -53,9 +53,8 @@ public class Cube : MonoBehaviour {
         var disk = other.gameObject.GetComponent<Disk>();
 
         if (disk) {
-            Debug.Log("Cube collision triggered");
-            Debug.Log("Change cube alliance to " + disk.Alliance);
-            SetAlliance(disk.Alliance);
+            
+            Board.Instance.HandleSetTileAlliance(disk.Alliance, X, Y);
         }
     }
 }

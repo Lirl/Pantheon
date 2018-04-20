@@ -1841,7 +1841,7 @@ Prefab:
     - target: {fileID: 224182356308235872, guid: 81e3ea1b5071f144f8a339a01073f28a,
         type: 2}
       propertyPath: m_LocalPosition.y
-      value: 55
+      value: 51.199997
       objectReference: {fileID: 0}
     - target: {fileID: 224182356308235872, guid: 81e3ea1b5071f144f8a339a01073f28a,
         type: 2}
@@ -2280,6 +2280,7 @@ MonoBehaviour:
   alertCanvas: {fileID: 0}
   TurnCounter: 0
   Deck: 
+  boardOffset: {x: 29, y: 0, z: 44}
   isHost: 0
   MessageBox: {fileID: 0}
   CurrentCharacter:

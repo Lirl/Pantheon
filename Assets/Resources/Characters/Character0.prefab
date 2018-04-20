@@ -553,6 +553,10 @@ MonoBehaviour:
   SJ: {fileID: 0}
   mesh: {fileID: 0}
   Alliance: 0
+  Health: -1
+  Attack: 1
+  Id: -1
+  Enable: 1
 --- !u!120 &120795468386395288
 LineRenderer:
   m_ObjectHideFlags: 1
