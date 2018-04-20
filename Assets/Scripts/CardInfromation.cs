@@ -3,18 +3,12 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class CardInfromation : MonoBehaviour {
+public class CardInformation {
 
-    public bool isOpen = false;
+    public int Code;
+    public string Name;
+    public string ImageUrl;
+    public string Description;
+    public string PrefabName;
 
-    public void OnMouseDown() {
-        if (!isOpen) {
-            isOpen = true;
-            OpenInfo();
-        }
-    }
-
-    private void OpenInfo() {
-        
-    }
 }

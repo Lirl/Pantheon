@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using System;
+using UnityEngine.EventSystems;
 
 public class Board : MonoBehaviour
 {
@@ -16,7 +17,7 @@ public class Board : MonoBehaviour
     public const int MAP_WIDTH = 59;
     public const int MAP_HEIGHT = 89;
 
-    public int[,] Tiles = new int[MAP_WIDTH, MAP_HEIGHT];
+    public GameObject[,] Tiles = new GameObject[MAP_WIDTH, MAP_HEIGHT];
     public int[] Score = new int[2]; // Score[0] <= Host. Score[1] <= Client
 
     public Transform chatMessageContainer;
@@ -35,6 +36,7 @@ public class Board : MonoBehaviour
     private bool isZoomedIn = false;
 
     public int TurnCounter = 0;
+    public List<int> Deck;
 
     private Vector3 boardOffset = new Vector3(29.0f, 0, 44.0f);
     private Vector3 pieceOffset = new Vector3(0.5f, 0.125f, 0.5f);
@@ -42,7 +44,7 @@ public class Board : MonoBehaviour
     public bool isHost;
 
     internal void OnDiskReleased(Disk disk) {
-        var pos = disk.gameObject.transform.position;
+        var pos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         client.Send("CRELEASEDISK|" + disk.Alliance + "|" + pos.x + "|" + pos.z);
     }
 
@@ -55,6 +57,7 @@ public class Board : MonoBehaviour
 
     public Text MessageBox;
 
+    public List<CardInformation> CardTypes = new List<CardInformation>();
     public GameObject[] CurrentCharacter = new GameObject[2];
 
     private Client client;
@@ -98,6 +101,9 @@ public class Board : MonoBehaviour
         isYourTurn = !isYourTurn;
         Debug.Log("Player " + (isYourTurn ? 1 : 2) + " turn #" + TurnCounter);
         if (isYourTurn) {
+            // Add a new card to player hand (current turn)
+            DrawCard();
+
             if (Hand) {
                 Alert("Setting Hand ACTIVE for " + (isHost ? 1 : 2) + " turn #" + TurnCounter);
                 Hand.SetActive(true);
@@ -112,8 +118,26 @@ public class Board : MonoBehaviour
         }
     }
 
+    private void DrawCard() {
+        if(Deck.Count == 0) {
+            Debug.LogError("Deck is empty");
+            return;
+        }
+
+        int code = Deck[0];
+        Deck.RemoveAt(0);
+
+        Card.CreateCard(code, Hand.transform);
+    }
+
     public void CreateSelectedDisk() {
-        client.Send("CCREATEDISK|" + (isHost ? 1 : 0));
+        GameObject button = EventSystem.current.currentSelectedGameObject;
+        Card card = button.GetComponent<Card>();
+        int code = card.Code; // Indicates which disk should be created according ot Board DiskTypes array
+
+        button.transform.parent = null;
+        Destroy(button);
+        client.Send("CCREATEDISK|" + (isHost ? 1 : 0) + "|" + code);        
     }
 
     private void Update()
@@ -147,23 +171,51 @@ public class Board : MonoBehaviour
 
     internal void ReleaseDisk(int alliance, float x, float y) {
         // If the disk is yours, you already got that effect
-        if (alliance != (isHost ? 1 : 0)) {
-            // Alliance is of the opposing player
-            // therefore we should play his move by moving his piece to according to his mouse position
-            // and releasing
-            GameObject disk = CurrentCharacter[alliance];
-            if (!disk) {
-                Debug.LogError("Release disk: Could not release disk of player " + alliance + " since its undefined");
-            }
-            disk.GetComponent<Disk>().SetPositionAndRelease(new Vector3(x, 0, y));
-        } else {
+        
+        // Alliance is of the opposing player
+        // therefore we should play his move by moving his piece to according to his mouse position
+        // and releasing
+        GameObject disk = CurrentCharacter[alliance];
+        if (!disk) {
+            Debug.LogError("Release disk: Could not release disk of player " + alliance + " since its undefined");
+        }
+
+        // Actually releasing the disk
+        disk.GetComponent<Disk>().SetPositionAndRelease(new Vector3(x, 0, y));
+
+        if (alliance == (isHost ? 1 : 0)) {
             // This is the player that played the move
             // He should end the turn
             EndTurn();
         }
-
-        
     }
+
+    internal GameObject CreateDisk(int alliance, int code) {
+        GameObject hook;
+        if (alliance == 1) {
+            hook = GameObject.Find("HostHook");
+        } else {
+            hook = GameObject.Find("ClientHook");
+        }
+
+        var prefab = Resources.Load("Characters/Character" + code) as GameObject;
+
+        var ins = Instantiate(prefab, hook.transform.position, Quaternion.identity);
+        ins.GetComponent<SpringJoint>().connectedAnchor = hook.transform.position;
+        ins.GetComponent<SpringJoint>().connectedBody = hook.GetComponent<Rigidbody>();
+        ins.GetComponent<Disk>().Init(alliance, isYourTurn);
+        CurrentCharacter[alliance] = ins;
+
+        // Handle UI
+        if (Hand) {
+            Hand.SetActive(false);
+        }
+
+        isZoomedOut = true;
+
+        return ins;
+    }
+
 
     internal GameObject CreateDisk(int alliance) {
         GameObject hook;
@@ -285,16 +337,38 @@ public class Board : MonoBehaviour
 
     private void GenerateBoard()
     {
+        // Create deck list
+        Deck = new List<int>();
+        for (int i = 0; i < 30; i++) {
+            // Set deck currently with values from 0 to 1
+            Deck.Add(UnityEngine.Random.Range(0,1));
+        }
+
         // Reset score
         Score[0] = 0;
         Score[1] = 0;
 
         MaxScore = MAP_WIDTH * MAP_HEIGHT;
 
+        GameObject go = Resources.Load("Cube") as GameObject;
+
+        /*
         // fill 2D Array with -1
         for (int row = 0; row < MAP_WIDTH; row++) {
             for (int column = 0; column < MAP_HEIGHT; column++) {
-                Tiles[row, column] = -1;
+                Tiles[row, column] = Instantiate(go, new Vector3(row, -0.4f, column) - boardOffset, Quaternion.identity);
+                Tiles[row, column].GetComponent<Cube>().Init(-1, row, column); // might be redundent as this is default
+            }
+        }*/
+
+        // fill 2D Array with -1
+        for (int row = 0; row < MAP_WIDTH; row++) {
+            for (int column = 0; column < MAP_HEIGHT; column++) {
+                if(row % 3 == 0 && column % 3 == 0) {
+                    Tiles[row, column] = Instantiate(go, new Vector3(row, -0.4f, column) - boardOffset, Quaternion.identity);
+                    //Tiles[row, column].transform.localScale = new Vector3(3, 3);
+                    Tiles[row, column].GetComponent<Cube>().Init(-1, row, column); // might be redundent as this is default
+                } 
             }
         }
     }
@@ -305,13 +379,11 @@ public class Board : MonoBehaviour
             return;
         }
 
-        if(Tiles[x, y] != -1) {
-            Tiles[x, y] = alliance;
+        if(Tiles[x, y]) {
+            Tiles[x, y].GetComponent<Cube>().SetAlliance(alliance);
         }
 
-        Tiles[x, y] = alliance;
         Score[alliance]++;
-
         Debug.Log("Tile " + x + "," + y + " was set with " + alliance);
     }
 
@@ -323,6 +395,8 @@ public class Board : MonoBehaviour
         lastAlert = Time.time;
         alertActive = true;
     }
+
+
     public void UpdateAlert()
     {
         if (alertActive)

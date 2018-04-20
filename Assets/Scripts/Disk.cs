@@ -19,6 +19,8 @@ public class Disk : MonoBehaviour {
 
     public int Alliance;
 
+    public bool Enable = true; // when disabled, block any mouse interaction with this game object
+
     private void Awake() {
         line = GetComponent<LineRenderer>();
         SJ = GetComponent<SpringJoint>();
@@ -30,6 +32,12 @@ public class Disk : MonoBehaviour {
         mesh = SJ.connectedBody.GetComponent<MeshRenderer>();
         line.SetPosition(0, SJ.connectedBody.position);
     }
+
+    public void Init(int alliance, bool enable) {
+        Enable = enable;
+        Init(alliance);
+    }
+
 
     private void Update() {
         if (isMouseDown) {
@@ -45,15 +53,26 @@ public class Disk : MonoBehaviour {
     }
 
     private void OnMouseDown() {
+        if(!Enable) {
+            return;
+        }
+
         isMouseDown = true;
         Rigidbody.isKinematic = true;
         mesh.enabled = true;
-        line.enabled = true;
+        if(line) {
+            line.enabled = true;
+        }
     }
 
     private void OnMouseUp() {
+        if (!Enable) {
+            return;
+        }
+
+        isMouseDown = false;
         Board.Instance.OnDiskReleased(this);
-        Release();
+        //Release();
     }
 
     public void Release() {

@@ -98,7 +98,7 @@ public class Client : MonoBehaviour
                 break;
             case "SCREATEDISK":
                 // Create a disk for aData[1] player
-                Board.Instance.CreateDisk(int.Parse(aData[1]));
+                Board.Instance.CreateDisk(int.Parse(aData[1]), int.Parse(aData[2]));
                 break;
             case "SSTARTTURN":
                 // Create a disk for aData[1] player

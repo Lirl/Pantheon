@@ -162,7 +162,7 @@ public class Server : MonoBehaviour
                 Broadcast("SRELEASEDISK|" + int.Parse(aData[1]) + "|" + double.Parse(aData[2]) + "|" + double.Parse(aData[3]), clients);
                 break;
             case "CCREATEDISK":
-                Broadcast("SCREATEDISK|" + int.Parse(aData[1]), clients);
+                Broadcast("SCREATEDISK|" + int.Parse(aData[1]) + "|" + int.Parse(aData[2]), clients);
                 break;
             case "CSTARTTURN":
                 Broadcast("SSTARTTURN", clients);
