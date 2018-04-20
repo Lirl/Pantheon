@@ -19,6 +19,8 @@ public class Card : MonoBehaviour {
             ins.transform.parent = parent;
         }
 
+        ins.GetComponent<Button>().onClick.AddListener(Board.Instance.CreateSelectedDisk);
+
         return ins;
     }
 }

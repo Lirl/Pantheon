@@ -207,7 +207,7 @@ public class Board : MonoBehaviour {
         }
 
         // Actually releasing the disk
-        disk.GetComponent<Disk>().SetPositionAndRelease(new Vector3(x, 0, y));
+        disk.GetComponent<Disk>().SetPositionAndRelease(new Vector3(x, 0.1f, y));
 
         if (alliance == (isHost ? 1 : 0)) {
             // This is the player that played the move
