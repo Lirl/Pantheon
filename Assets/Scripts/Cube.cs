@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class Cube : MonoBehaviour {
     MeshRenderer mesh;
-    public Material[] materials = new Material[3];
+    public Material[] materials = new Material[6];
     public int Alliance;
     public int X;
     public int Y;
@@ -26,14 +26,25 @@ public class Cube : MonoBehaviour {
     public void SetAlliance(int alliance) {
         Alliance = alliance;
         if(alliance == -1) {
-            alliance = 2; // default material
+            alliance = 0; // default material
+        } else {
+            if(alliance == 0) {
+                alliance = alliance + 2;
+            }
+            else {
+                alliance = alliance + 3;
+            }
+            
         }
-        mesh.material = materials[alliance];
 
-        if((X % 6 == 0) && (Y % 6 == 0)) {
-            mesh.material.color = new Color(mesh.material.color.r + 1.0f, mesh.material.color.r + 1.0f, mesh.material.color.r + 1.0f);
-        }
-        
+        // 0 - normal grey
+        // 1 - dark grey
+        // 2 - red normal
+        // 3 - red dark
+        // 4 - blue normal
+        // 5 - blue dark
+
+        mesh.material = materials[alliance + ((X + Y) % 2 == 0 ? 1 : 0)];
     }
 
 

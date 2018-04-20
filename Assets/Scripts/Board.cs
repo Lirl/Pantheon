@@ -351,7 +351,8 @@ public class Board : MonoBehaviour
         MaxScore = MAP_WIDTH * MAP_HEIGHT;
 
         GameObject go = Resources.Load("Cube") as GameObject;
-
+        GameObject cubeWall = Resources.Load("CubeWall") as GameObject;
+        GameObject waterCube = Resources.Load("WaterCube") as GameObject;
         /*
         // fill 2D Array with -1
         for (int row = 0; row < MAP_WIDTH; row++) {
@@ -362,16 +363,24 @@ public class Board : MonoBehaviour
         }*/
 
         // fill 2D Array with -1
-        for (int row = 0; row < MAP_WIDTH; row++) {
-            for (int column = 0; column < MAP_HEIGHT; column++) {
-                if(row % 3 == 0 && column % 3 == 0) {
+        for (int row = -1; row < MAP_WIDTH + 1; row++) {
+            for (int column = -1; column < MAP_HEIGHT+ 1; column++) {
+                if (row % 3 == 0 && column % 3 == 0) {
                     Tiles[row, column] = Instantiate(go, new Vector3(row, -0.4f, column) - boardOffset, Quaternion.identity);
                     //Tiles[row, column].transform.localScale = new Vector3(3, 3);
                     Tiles[row, column].GetComponent<Cube>().Init(-1, row, column); // might be redundent as this is default
-                } 
+                }//row == -1 || row == MAP_WIDTH ||
+                if ( row == -1 || row == MAP_WIDTH) {
+                    if (column < (float)(MAP_HEIGHT / 3) || column > (float)((2.0f/3.0f) * MAP_HEIGHT)) {
+                        Instantiate(cubeWall, new Vector3(row, 0.5f, column) - boardOffset, Quaternion.identity);
+                    } else {
+                        Instantiate(waterCube, new Vector3(row, -0.4f, column) - boardOffset, Quaternion.identity);
+                    }
+                }
             }
         }
     }
+
 
     public void SetTileAlliance(int alliance, int x, int y) {
 
