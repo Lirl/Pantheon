@@ -5,7 +5,8 @@ using UnityEngine;
 using UnityEngine.UI;
 
 public class Disk : MonoBehaviour {
-
+    private Vector3 originalPosition;
+    internal bool startedMoving = false;
     private bool isMouseDown = false;
     private bool zoomOut = false;
     public Rigidbody Rigidbody;
@@ -60,10 +61,6 @@ public class Disk : MonoBehaviour {
             if (line) {
                 line.SetPosition(1, Rigidbody.position);
             }
-            ZoomInCamera();
-        }
-        if (zoomOut) {
-            ZoomOutCamera();
         }
     }
 
@@ -72,12 +69,16 @@ public class Disk : MonoBehaviour {
             return;
         }
 
+        originalPosition = transform.position;
+
         isMouseDown = true;
         Rigidbody.isKinematic = true;
         mesh.enabled = true;
         if (line) {
             line.enabled = true;
         }
+
+        Board.Instance.OnDiskClick(this);
     }
 
     private void OnMouseUp() {
@@ -86,7 +87,9 @@ public class Disk : MonoBehaviour {
         }
 
         isMouseDown = false;
-        Board.Instance.OnDiskReleased(this);
+        var pos = transform.position;
+        transform.position = originalPosition;
+        Board.Instance.OnDiskReleased(this, pos);
         //Release();
     }
 
@@ -109,23 +112,10 @@ public class Disk : MonoBehaviour {
         mesh.enabled = false;
         yield return new WaitForSeconds(releaseTime);
         Destroy(GetComponent<SpringJoint>());
+        startedMoving = true;
         yield return new WaitForSeconds(endTurn);
-        zoomOut = true;
     }
 
-    private void ZoomInCamera() {
-        if (Camera.main.orthographicSize <= 75) {
-            Camera.main.orthographicSize += cameraAdjuster;
-        }
-    }
-
-    private void ZoomOutCamera() {
-        if (Camera.main.orthographicSize >= 45) {
-            Camera.main.orthographicSize -= cameraAdjuster;
-        } else {
-            zoomOut = false;
-        }
-    }
 
     private void OnCollisionEnter(Collision collision) {
         if (collision.gameObject.name == "WaterCube") {

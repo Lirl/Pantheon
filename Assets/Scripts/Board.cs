@@ -37,7 +37,7 @@ public class Board : MonoBehaviour {
     public int TurnCounter = 0;
     public List<int> Deck;
 
-    private Vector3 boardOffset = new Vector3(29.0f, 0, 44.0f);
+    public Vector3 boardOffset = new Vector3(29.0f, 0, 44.0f);
     private Vector3 pieceOffset = new Vector3(0.5f, 0.125f, 0.5f);
 
     public bool isHost;
@@ -47,8 +47,7 @@ public class Board : MonoBehaviour {
         Disks.Add(id, disk);
     }
 
-    internal void OnDiskReleased(Disk disk) {
-        var pos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+    internal void OnDiskReleased(Disk disk, Vector3 pos) {
         if(client) {
             client.Send("CRELEASEDISK|" + disk.Alliance + "|" + pos.x + "|" + pos.z);
         } else {
@@ -104,6 +103,11 @@ public class Board : MonoBehaviour {
         StartTurn();
     }
 
+    internal void OnDiskClick(Disk disk) {
+        isZoomedIn = false;
+        isZoomedOut = true;
+    }
+
     public void StartTurn() {
         TurnCounter++;
         isYourTurn = !isYourTurn;
@@ -122,7 +126,6 @@ public class Board : MonoBehaviour {
                 Alert("Setting Hand NOT-ACTIVE for " + (isHost ? 1 : 2) + " turn #" + TurnCounter);
                 Hand.SetActive(false);
             }
-            isZoomedIn = true;
         }
     }
 
@@ -154,13 +157,19 @@ public class Board : MonoBehaviour {
     }
 
     public void CreateSelectedDisk() {
+
         GameObject button = EventSystem.current.currentSelectedGameObject;
         Card card = button.GetComponent<Card>();
         int code = card.Code; // Indicates which disk should be created according ot Board DiskTypes array
 
+        isZoomedOut = false;
+        isZoomedIn = true;
+
         button.transform.parent = null;
         Destroy(button);
+
         if(client) {
+            Debug.Log("Fire CCREATEDISK");
             client.Send("CCREATEDISK|" + (isHost ? 1 : 0) + "|" + code);
         } else {
             CreateDisk((isHost ? 1 : 0), code);
@@ -175,19 +184,19 @@ public class Board : MonoBehaviour {
             SetTileAlliance((isHost ? 0 : 1), (int)mouseOver.x, (int)mouseOver.y);
         }
 
-        if (isZoomedOut) {
+        if (isZoomedIn) {
             if (Camera.main.orthographicSize >= 45) {
                 Camera.main.orthographicSize -= 0.5f;
             } else {
-                isZoomedOut = false;
+                isZoomedIn = false;
             }
         }
-
-        if (isZoomedIn) {
+        
+        if (isZoomedOut) {
             if (Camera.main.orthographicSize <= 75) {
                 Camera.main.orthographicSize += 0.5f;
             } else {
-                isZoomedIn = false;
+                isZoomedOut = false;
             }
         }
 
@@ -212,11 +221,12 @@ public class Board : MonoBehaviour {
         if (alliance == (isHost ? 1 : 0)) {
             // This is the player that played the move
             // He should end the turn
-            EndTurn();
+            Invoke("EndTurn", 2);
         }
     }
 
     internal GameObject CreateDisk(int alliance, int code) {
+        Debug.Log("CreateDisk excepted. alliance = " + alliance + " code = " + code);
         GameObject hook;
         if (alliance == 1) {
             hook = GameObject.Find("HostHook");
@@ -224,6 +234,7 @@ public class Board : MonoBehaviour {
             hook = GameObject.Find("ClientHook");
         }
 
+        Debug.Log("Attempting to load prefab " + "Characters/Character" + code);
         var prefab = Resources.Load("Characters/Character" + code) as GameObject;
 
         var ins = Instantiate(prefab, hook.transform.position, Quaternion.identity);
@@ -236,8 +247,6 @@ public class Board : MonoBehaviour {
         if (Hand) {
             Hand.SetActive(false);
         }
-
-        isZoomedOut = true;
 
         return ins;
     }
@@ -261,8 +270,6 @@ public class Board : MonoBehaviour {
         if (Hand) {
             Hand.SetActive(false);
         }
-
-        isZoomedOut = true;
 
         return ins;
     }
@@ -310,12 +317,6 @@ public class Board : MonoBehaviour {
         }
     }*/
 
-
-    IEnumerator EndTurnAfter() {
-        yield return new WaitForSeconds(5);
-        EndTurn();
-    }
-
     private void EndTurn() {
         Debug.Log("EndTurn");
         var found = CheckVictory();
@@ -326,7 +327,12 @@ public class Board : MonoBehaviour {
         }
 
         Debug.Log("Winner not found");
-        client.Send("CSTARTTURN");
+        if(client) {
+            client.Send("CSTARTTURN");
+        } else {
+            StartTurn();
+        }
+        
     }
 
     private void Victory(bool isWhite) {
