@@ -8,6 +8,7 @@ public class Disk : MonoBehaviour {
 
     private bool isMouseDown = false;
     private bool zoomOut = false;
+    internal bool startedMoving = false; 
     public Rigidbody Rigidbody;
     public SpringJoint SpringJoint;
     public float releaseTime = 0.15f;
@@ -26,6 +27,7 @@ public class Disk : MonoBehaviour {
     public bool Enable = true; // when disabled, block any mouse interaction with this game object
 
     private static int _idCounter = 0;
+
     public static int GenerateId() {
         _idCounter++;
         return _idCounter;
@@ -109,6 +111,7 @@ public class Disk : MonoBehaviour {
         mesh.enabled = false;
         yield return new WaitForSeconds(releaseTime);
         Destroy(GetComponent<SpringJoint>());
+        startedMoving = true;
         yield return new WaitForSeconds(endTurn);
         zoomOut = true;
     }
