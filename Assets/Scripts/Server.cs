@@ -167,6 +167,9 @@ public class Server : MonoBehaviour
             case "CSTARTTURN":
                 Broadcast("SSTARTTURN", clients);
                 break;
+            case "CDISTROYDISK":
+                Broadcast("SDISTROYDISK|" + int.Parse(aData[1]), clients);
+                break;
             case "CMSG":
                 Broadcast("SMSG|" + c.clientName + " : " + aData[1],clients);
                 break;

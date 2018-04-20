@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -18,8 +19,17 @@ public class Disk : MonoBehaviour {
     public MeshRenderer mesh;
 
     public int Alliance;
+    public int Health = -1;
+    public int Attack = 1;
+    public int Id = -1;
 
     public bool Enable = true; // when disabled, block any mouse interaction with this game object
+
+    private static int _idCounter = 0;
+    public static int GenerateId() {
+        _idCounter++;
+        return _idCounter;
+    }
 
     private void Awake() {
         line = GetComponent<LineRenderer>();
@@ -31,13 +41,18 @@ public class Disk : MonoBehaviour {
         Alliance = alliance;
         mesh = SJ.connectedBody.GetComponent<MeshRenderer>();
         line.SetPosition(0, SJ.connectedBody.position);
+        if (Health == -1) {
+            Health = 1;
+        }
+        Id = GenerateId();
+
+        Board.Instance.SaveDisk(Id, this);
     }
 
     public void Init(int alliance, bool enable) {
         Enable = enable;
         Init(alliance);
     }
-
 
     private void Update() {
         if (isMouseDown) {
@@ -46,21 +61,21 @@ public class Disk : MonoBehaviour {
                 line.SetPosition(1, Rigidbody.position);
             }
             ZoomInCamera();
-        } 
+        }
         if (zoomOut) {
             ZoomOutCamera();
         }
     }
 
     private void OnMouseDown() {
-        if(!Enable) {
+        if (!Enable) {
             return;
         }
 
         isMouseDown = true;
         Rigidbody.isKinematic = true;
         mesh.enabled = true;
-        if(line) {
+        if (line) {
             line.enabled = true;
         }
     }
@@ -98,17 +113,37 @@ public class Disk : MonoBehaviour {
         zoomOut = true;
     }
 
-    private void ZoomInCamera () {
+    private void ZoomInCamera() {
         if (Camera.main.orthographicSize <= 75) {
             Camera.main.orthographicSize += cameraAdjuster;
         }
     }
 
-    private void ZoomOutCamera () {
+    private void ZoomOutCamera() {
         if (Camera.main.orthographicSize >= 45) {
             Camera.main.orthographicSize -= cameraAdjuster;
         } else {
             zoomOut = false;
         }
+    }
+
+    private void OnCollisionEnter(Collision collision) {
+        if (collision.gameObject.name == "WaterCube") {
+            var disk = collision.gameObject.GetComponent<Disk>();
+            if (disk) {
+                Board.Instance.DestroyDisk(disk);
+            }
+        }
+    }
+
+    private void DealDamage(int attack) {
+        Health -= attack;
+        if (Health < 0) {
+
+        }
+    }
+
+    internal void DestroyDisk() {
+        Destroy(this);
     }
 }

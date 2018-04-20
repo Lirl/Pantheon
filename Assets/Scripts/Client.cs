@@ -104,6 +104,9 @@ public class Client : MonoBehaviour
                 // Create a disk for aData[1] player
                 Board.Instance.StartTurn();
                 break;
+            case "SDISTROYDISK":
+                Board.Instance.HandleDestroyDisk(int.Parse(aData[1]));
+                break;
             case "SMSG":
                 Board.Instance.ChatMessage(aData[1]);
                 break; 
