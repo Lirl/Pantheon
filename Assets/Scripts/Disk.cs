@@ -21,12 +21,14 @@ public class Disk : MonoBehaviour {
 
     public int Alliance;
     public int Health = -1;
+
     public int Attack = 1;
     public int Id = -1;
 
     public bool Enable = false; // when disabled, block any mouse interaction with this game object
 
     private static int _idCounter = 0;
+    private bool enlarge = false;
 
     public static int GenerateId() {
         _idCounter++;
@@ -61,6 +63,14 @@ public class Disk : MonoBehaviour {
             Rigidbody.position = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             if (line) {
                 line.SetPosition(1, Rigidbody.position);
+            }
+        }
+        if (enlarge) {
+            if (gameObject.transform.localScale.x < 9 && gameObject.transform.localScale.z < 9) {
+                gameObject.transform.position += new Vector3(0, 0.05f, 0);
+                gameObject.transform.localScale += new Vector3(0.1f, 0, 0.1f);
+            } else {
+                enlarge = false;
             }
         }
     }
@@ -139,4 +149,10 @@ public class Disk : MonoBehaviour {
     internal void DestroyDisk() {
         Destroy(this);
     }
+
+
+    internal void Enlarge() {
+        enlarge = true;
+    }
+
 }

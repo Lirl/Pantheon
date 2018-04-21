@@ -15,9 +15,13 @@ public class Board : MonoBehaviour {
 
     public double WinScoreThreshold = 0.8; // you need 80% control over the board
 
-    public const int MAP_WIDTH = 59;
-    public const int MAP_HEIGHT = 89;
+    public const int MAP_WIDTH = 60;
+    public const int MAP_HEIGHT = 90;
 
+    public const int MAP_WIDTH_REAL = 20;
+    public const int MAP_HEIGHT_REAL = 30;
+
+    public int powerUpsAmount = 2;
     public GameObject[,] Tiles = new GameObject[MAP_WIDTH, MAP_HEIGHT];
     public int[] Score = new int[2]; // Score[0] <= Host. Score[1] <= Client
 
@@ -107,6 +111,7 @@ public class Board : MonoBehaviour {
         StartTurn();
 
         if(isHost) {
+            Invoke("CreatePowerUp", 1f);
             Invoke("CheckWinner", 90);
         }
     }
@@ -257,6 +262,30 @@ public class Board : MonoBehaviour {
             Invoke("EndTurn", 2);
         }
     }
+    internal void CreatePowerUp() {
+        int x = UnityEngine.Random.Range(1, MAP_WIDTH_REAL - 1);
+        int y = UnityEngine.Random.Range(1, MAP_HEIGHT_REAL - 1);
+        if (client) {
+            //client.Send();
+        }
+        else {
+            HandleCreatePowerUp(UnityEngine.Random.Range(0, powerUpsAmount), x, y);
+            Invoke("CreatePowerUp", 10f);
+        }
+    }
+
+    internal GameObject HandleCreatePowerUp(int code, int x, int y) {
+        var toInstantiate = Resources.Load("Characters/PowerUps" + code) as GameObject;
+        Debug.Log(x + ", " + y);
+        GameObject rune = Instantiate(toInstantiate, Tiles[x, y].transform.position + new Vector3(0, 2f, 0), Quaternion.Euler(new Vector3(45, 45, 45)));
+        var runeScript = rune.GetComponent<PowerUp>();
+        runeScript.code = code;
+        runeScript.xTile = x;
+        runeScript.yTile = y;
+        //Instantiate(powerUp[UnityEngine.Random.Range(0, powerUp.Length)], location + new Vector3(0, 1.4f,0), Quaternion.identity);
+        return rune;
+    }
+
 
     internal GameObject CreateDisk(int alliance, int code) {
         Debug.Log("CreateDisk excepted. alliance = " + alliance + " code = " + code);
@@ -271,7 +300,6 @@ public class Board : MonoBehaviour {
         var prefab = Resources.Load("Characters/Character" + code) as GameObject;
 
         var ins = Instantiate(prefab, hook.transform.position + new Vector3(0, 3f, 0), Quaternion.identity);
-        //ins.GetComponent<SpringJoint>().connectedAnchor = hook.transform.position;
         ins.GetComponent<SpringJoint>().connectedBody = hook.GetComponent<Rigidbody>();
         ins.GetComponent<Disk>().Init(alliance, isYourTurn);
         CurrentCharacter[alliance] = ins;
@@ -424,16 +452,17 @@ public class Board : MonoBehaviour {
         for (int row = -1; row < MAP_WIDTH + 1; row++) {
             for (int column = -1; column < MAP_HEIGHT + 1; column++) {
                 if (row % 3 == 0 && column % 3 == 0) {
-                    Tiles[row, column] = Instantiate(go, new Vector3(row, -0.4f, column) - boardOffset, Quaternion.identity);
+                    var ins = Instantiate(go, new Vector3(row, -0.4f, column) - boardOffset, Quaternion.identity);
                     //Tiles[row, column].transform.localScale = new Vector3(3, 3);
-                    Tiles[row, column].GetComponent<Cube>().Init(-1, row, column); // might be redundent as this is default
+                    ins.GetComponent<Cube>().Init(-1, row / 3, column / 3); // might be redundent as this is default
+                    Tiles[row / 3, column / 3] = ins;
                 }//row == -1 || row == MAP_WIDTH ||
                 if (row == -1 || row == MAP_WIDTH) {
                     if (column < (float)(MAP_HEIGHT / 3) || column > (float)((2.0f / 3.0f) * MAP_HEIGHT)) {
                         Instantiate(cubeWall, new Vector3(row, 0.5f, column) - boardOffset, Quaternion.identity);
-                    } else {
-                        var offset = (row == -1 ? -2 : 1);
-                        Instantiate(waterCube, new Vector3(row + offset, -1.5f, column) - boardOffset, Quaternion.identity);
+                    }
+                    else {
+                        Instantiate(waterCube, new Vector3(row, -1f, column) - boardOffset, Quaternion.identity);
                     }
                 }
             }

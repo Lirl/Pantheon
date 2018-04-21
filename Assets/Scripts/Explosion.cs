@@ -11,12 +11,14 @@ public class Explosion : MonoBehaviour {
     bool stopChecking = false;
     bool hasExploaded = false;
     public GameObject explosionEffect;
+    SphereCollider sphereRadius;
     Disk disk;
 
 
     // Use this for initialization
     void Start() {
         disk = GetComponent<Disk>();
+        sphereRadius = GetComponent<SphereCollider>();
     }
 
     // Update is called once per frame
@@ -36,7 +38,7 @@ public class Explosion : MonoBehaviour {
 
     private void Explode() {
 
-        Collider[] toBlast = Physics.OverlapSphere(transform.position, radius);
+        Collider[] toBlast = Physics.OverlapSphere(transform.position, radius + (gameObject.transform.localScale.x / 6));
 
         foreach (Collider c in toBlast) {
             Cube rb = c.GetComponent<Cube>();
