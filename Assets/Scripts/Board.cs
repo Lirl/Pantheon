@@ -11,6 +11,8 @@ public class Board : MonoBehaviour {
     public int MaxScore { get; private set; }
     public GameObject Hand;
 
+    public GameObject TimeMessage { get; private set; }
+
     public double WinScoreThreshold = 0.8; // you need 80% control over the board
 
     public const int MAP_WIDTH = 59;
@@ -30,6 +32,7 @@ public class Board : MonoBehaviour {
     private bool alertActive;
     private bool gameIsOver;
     private float winTime;
+    public float gameTime = 90f;
 
     private bool isZoomedOut = false;
     private bool isZoomedIn = false;
@@ -74,6 +77,7 @@ public class Board : MonoBehaviour {
         Instance = this;
         client = FindObjectOfType<Client>();
         Hand = GameObject.Find("Hand");
+        TimeMessage = GameObject.Find("TimeMessage") as  GameObject;
 
         alertCanvas = GameObject.Find("MessageCanvas").GetComponent<CanvasGroup>();
 
@@ -103,7 +107,7 @@ public class Board : MonoBehaviour {
         StartTurn();
 
         if(isHost) {
-            Invoke("CheckWinner", 30);
+            Invoke("CheckWinner", 90);
         }
     }
 
@@ -209,6 +213,9 @@ public class Board : MonoBehaviour {
 
             //SetTileAlliance((isHost ? 0 : 1), (int)mouseOver.x, (int)mouseOver.y);
         }
+
+        gameTime -= Time.deltaTime;
+        TimeMessage.GetComponentInChildren<Text>().text = gameTime.ToString().Substring(0,5);
 
         if (isZoomedIn) {
             if (Camera.main.orthographicSize >= 45) {
@@ -425,7 +432,8 @@ public class Board : MonoBehaviour {
                     if (column < (float)(MAP_HEIGHT / 3) || column > (float)((2.0f / 3.0f) * MAP_HEIGHT)) {
                         Instantiate(cubeWall, new Vector3(row, 0.5f, column) - boardOffset, Quaternion.identity);
                     } else {
-                        Instantiate(waterCube, new Vector3(row, -1f, column) - boardOffset, Quaternion.identity);
+                        var offset = (row == -1 ? -2 : 1);
+                        Instantiate(waterCube, new Vector3(row + offset, -1.5f, column) - boardOffset, Quaternion.identity);
                     }
                 }
             }

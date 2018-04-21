@@ -23,7 +23,7 @@ GameObject:
   - component: {fileID: 65428742884135598}
   - component: {fileID: 23075587387776372}
   - component: {fileID: 54446896770874696}
-  m_Layer: 9
+  m_Layer: 0
   m_Name: CubeWall
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -57,7 +57,7 @@ MeshRenderer:
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
   m_Materials:
-  - {fileID: 2100000, guid: 8dac2272fa9ff9b438f627ccf373af9b, type: 2}
+  - {fileID: 2100000, guid: a884fddc3e631e644b74500a97def570, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
