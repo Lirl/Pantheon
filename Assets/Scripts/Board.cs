@@ -425,7 +425,7 @@ public class Board : MonoBehaviour {
                     if (column < (float)(MAP_HEIGHT / 3) || column > (float)((2.0f / 3.0f) * MAP_HEIGHT)) {
                         Instantiate(cubeWall, new Vector3(row, 0.5f, column) - boardOffset, Quaternion.identity);
                     } else {
-                        Instantiate(waterCube, new Vector3(row, -0.4f, column) - boardOffset, Quaternion.identity);
+                        Instantiate(waterCube, new Vector3(row, -1f, column) - boardOffset, Quaternion.identity);
                     }
                 }
             }
@@ -443,7 +443,6 @@ public class Board : MonoBehaviour {
     }
 
     public void HandleSetTileAlliance(int alliance, int x, int y) {
-        Debug.Log("HandleSetTileAlliance " + alliance + " x: " + x + " y: " + y);
         if (x == -1 || y == -1) {
             return;
         }
@@ -463,7 +462,6 @@ public class Board : MonoBehaviour {
         }
 
         Score[alliance]++;
-        Debug.Log("Tile " + x + "," + y + " was set with " + alliance);
     }
 
     public void Alert(string text) {

@@ -8,8 +8,7 @@ public class Disk : MonoBehaviour {
     private Vector3 originalPosition;
     internal bool startedMoving = false;
     private bool isMouseDown = false;
-    private bool zoomOut = false;
-    internal bool startedMoving = false; 
+    private bool zoomOut = false;   
     public Rigidbody Rigidbody;
     public SpringJoint SpringJoint;
     public float releaseTime = 0.15f;

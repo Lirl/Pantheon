@@ -43,7 +43,6 @@ public class Granade : MonoBehaviour {
         foreach (Collider c in toBlast) {
             Rigidbody rb = c.GetComponent<Rigidbody>();
             if (rb != null && rb.gameObject.layer == 9) {
-                Debug.Log(c.name);
                 rb.AddExplosionForce(explosionForce, transform.position, radius);
                 rb.AddForce(transform.position.x - rb.transform.position.x, 0f, transform.position.z - rb.transform.position.z);
             }
