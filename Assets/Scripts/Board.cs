@@ -5,6 +5,7 @@ using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using System;
 using UnityEngine.EventSystems;
+using System.Text;
 
 public class Board : MonoBehaviour {
     public static Board Instance { set; get; }
@@ -55,7 +56,7 @@ public class Board : MonoBehaviour {
     }
 
     internal void OnDiskReleased(Disk disk, Vector3 pos) {
-        if(client) {
+        if (client) {
             client.Send("CRELEASEDISK|" + disk.Alliance + "|" + pos.x + "|" + pos.z);
         } else {
             ReleaseDisk(disk.Alliance, pos.x, pos.z);
@@ -75,13 +76,13 @@ public class Board : MonoBehaviour {
     public GameObject[] CurrentCharacter = new GameObject[2];
 
     private Client client;
-
+    private Vector3 prevDiskIdleResult = new Vector3(-1, -1, -1);
 
     private void Start() {
         Instance = this;
         client = FindObjectOfType<Client>();
         Hand = GameObject.Find("Hand");
-        TimeMessage = GameObject.Find("TimeMessage") as  GameObject;
+        TimeMessage = GameObject.Find("TimeMessage") as GameObject;
 
         alertCanvas = GameObject.Find("MessageCanvas").GetComponent<CanvasGroup>();
 
@@ -110,19 +111,44 @@ public class Board : MonoBehaviour {
         GenerateBoard();
         StartTurn();
 
-        if(isHost) {
+        if (isHost) {
             Invoke("CreatePowerUp", 1f);
             Invoke("CheckWinner", 90);
         }
     }
 
+    public void OnDisksIdleTrigger() {
+
+        var pos = new Vector3(0, 0, 0);
+        foreach (var pair in Disks) {
+            pos += pair.Value.transform.position;
+        }
+
+        // Meaning disks stopped moving
+        if (pos == prevDiskIdleResult) {
+            Debug.Log("Disks stopped moving !");
+            OnDisksIdle();
+        } else {
+            prevDiskIdleResult = pos;
+            Debug.Log("OnDisksIdleTrigger Invoke Started");
+            Invoke("OnDisksIdleTrigger", 1);
+        }
+    }
+
+    public void OnDisksIdle() {
+        Debug.Log("OnDisksIdle");
+        if (isYourTurn) {
+            SyncTiles();
+        }
+    }
+
     public void CheckWinner() {
 
-        if(Score[0] == Score[1]) {
+        if (Score[0] == Score[1]) {
             Debug.Log("Tie! 1 : " + Score[0] + " 2 : " + Score[1]);
         } else if (Score[0] > Score[1]) {
             Debug.Log("Player 2 is the winner! with a score of " + Score[0] + " . (opponent score is " + Score[1] + ")");
-        }else {
+        } else {
             Debug.Log("Player 1 is the winner! with a score of " + Score[1] + " . (opponent score is " + Score[0] + ")");
         }
 
@@ -135,7 +161,7 @@ public class Board : MonoBehaviour {
     }
 
     public void StartTurn() {
-        if(gameIsOver) {
+        if (gameIsOver) {
             return;
         }
 
@@ -199,11 +225,11 @@ public class Board : MonoBehaviour {
         button.transform.parent = null;
         Destroy(button);
 
-        if(Hand) {
+        if (Hand) {
             Hand.SetActive(false);
         }
-        
-        if(client) {
+
+        if (client) {
             Debug.Log("Fire CCREATEDISK");
             client.Send("CCREATEDISK|" + (isHost ? 1 : 0) + "|" + code);
         } else {
@@ -220,7 +246,7 @@ public class Board : MonoBehaviour {
         }
 
         gameTime -= Time.deltaTime;
-        TimeMessage.GetComponentInChildren<Text>().text = gameTime.ToString().Substring(0,5);
+        TimeMessage.GetComponentInChildren<Text>().text = gameTime.ToString().Substring(0, 5);
 
         if (isZoomedIn) {
             if (Camera.main.orthographicSize >= 45) {
@@ -229,7 +255,7 @@ public class Board : MonoBehaviour {
                 isZoomedIn = false;
             }
         }
-        
+
         if (isZoomedOut) {
             if (Camera.main.orthographicSize <= 75) {
                 Camera.main.orthographicSize += 0.5f;
@@ -259,18 +285,18 @@ public class Board : MonoBehaviour {
         if (alliance == (isHost ? 1 : 0)) {
             // This is the player that played the move
             // He should end the turn
-            Invoke("EndTurn", 2);
+            //Invoke("EndTurn", 2);
+            Invoke("OnDisksIdleTrigger", 1);
         }
     }
     internal void CreatePowerUp() {
         int x = UnityEngine.Random.Range(1, MAP_WIDTH_REAL - 1);
         int y = UnityEngine.Random.Range(1, MAP_HEIGHT_REAL - 1);
+        int amount = UnityEngine.Random.Range(0, powerUpsAmount);
         if (client) {
-            //client.Send();
-        }
-        else {
-            HandleCreatePowerUp(UnityEngine.Random.Range(0, powerUpsAmount), x, y);
-            Invoke("CreatePowerUp", 10f);
+            client.Send("CCREATEPOWERUP|" + amount + "|" + x + "|" + y);
+        } else {
+            HandleCreatePowerUp(amount, x, y);
         }
     }
 
@@ -282,6 +308,11 @@ public class Board : MonoBehaviour {
         runeScript.code = code;
         runeScript.xTile = x;
         runeScript.yTile = y;
+
+        if (isHost) {
+            Invoke("CreatePowerUp", 10f);
+        }
+
         //Instantiate(powerUp[UnityEngine.Random.Range(0, powerUp.Length)], location + new Vector3(0, 1.4f,0), Quaternion.identity);
         return rune;
     }
@@ -300,6 +331,7 @@ public class Board : MonoBehaviour {
         var prefab = Resources.Load("Characters/Character" + code) as GameObject;
 
         var ins = Instantiate(prefab, hook.transform.position + new Vector3(0, 3f, 0), Quaternion.identity);
+
         ins.GetComponent<SpringJoint>().connectedBody = hook.GetComponent<Rigidbody>();
         ins.GetComponent<Disk>().Init(alliance, isYourTurn);
         CurrentCharacter[alliance] = ins;
@@ -380,22 +412,12 @@ public class Board : MonoBehaviour {
 
     private void EndTurn() {
         Debug.Log("EndTurn");
-        /*var found = CheckVictory();
-        Debug.Log("After looking for victor " + found);
-
-        if (found) {
-            return;
-        }
-
-        Debug.Log("Winner not found");*/
-        if(client) {
+        if (client) {
             client.Send("CSTARTTURN");
         } else {
             StartTurn();
         }
-        
     }
-
 
     private void Victory(bool isWhite) {
         winTime = Time.time;
@@ -460,8 +482,7 @@ public class Board : MonoBehaviour {
                 if (row == -1 || row == MAP_WIDTH) {
                     if (column < (float)(MAP_HEIGHT / 3) || column > (float)((2.0f / 3.0f) * MAP_HEIGHT)) {
                         Instantiate(cubeWall, new Vector3(row, 0.5f, column) - boardOffset, Quaternion.identity);
-                    }
-                    else {
+                    } else {
                         Instantiate(waterCube, new Vector3(row, -1f, column) - boardOffset, Quaternion.identity);
                     }
                 }
@@ -470,8 +491,8 @@ public class Board : MonoBehaviour {
     }
 
     public void SetTileAlliance(int alliance, int x, int y) {
-        if(client) {
-            if(isYourTurn) {
+        if (client) {
+            if (isYourTurn) {
                 client.Send("CSETTILE|" + alliance + "|" + x + "|" + y);
             }
         } else {
@@ -486,12 +507,12 @@ public class Board : MonoBehaviour {
 
         if (Tiles[x, y]) {
             var cube = Tiles[x, y].GetComponent<Cube>();
-            if(cube.Alliance != alliance) {
-                if(cube.Alliance != -1) {
+            if (cube.Alliance != alliance) {
+                if (cube.Alliance != -1) {
                     Score[cube.Alliance]--;
                     Score[alliance]++;
                 } else {
-                    
+
                     Score[alliance]++;
                 }
                 cube.SetAlliance(alliance);
@@ -557,4 +578,85 @@ public class Board : MonoBehaviour {
 
         i.text = "";
     }
+
+    public void SyncTiles() {
+        StringBuilder sb = new StringBuilder();
+
+        for (int i = 0; i < MAP_WIDTH_REAL; i++) {
+            for (int j = 0; j < MAP_HEIGHT_REAL; j++) {
+                try {
+                    var cube = Tiles[i, j].GetComponent<Cube>();
+                    if (cube) {
+                        if (cube.Alliance > -1) {
+                            sb.Append(cube.ToString() + '+');
+                        }
+                    }
+                } catch (Exception e) {
+                    Debug.Log("SyncTiles: (" + i + "," + j + ") " + e.Message);
+                }
+            }
+        }
+
+        string res = sb.ToString();
+        res = res.Remove(sb.Length - 1);
+
+        if (client) {
+            client.Send("CSYNCTILES|" + (isHost ? 1 : 0) + "|" + res);
+        } else {
+            HandleSyncTiles(isHost ? 1 : 0, res);
+        }
+
+    }
+
+    public void HandleSyncTiles(int clientId, string data) {
+        // i,j=alliance+
+        Debug.Log("SyncTilesRecieved");
+
+        if (clientId == (isHost ? 1 : 0)) {
+            EndTurn();
+        } else {
+
+            var dots = data.Split('+');
+
+            for (int i = 0; i < dots.Length; i++) {
+                var stam = dots[i].Split(',');
+                int x = int.Parse(stam[0]);
+                int y = int.Parse(stam[1].Split('=')[0]);
+                int alliance = int.Parse(stam[1].Split('=')[1]);
+
+                if (alliance != -1) {  // double checking
+                    var cube = Tiles[x, y].GetComponent<Cube>();
+                    if (cube.Alliance != alliance) {
+                        if (cube.Alliance != -1) {
+                            Score[cube.Alliance]--;
+                        }
+                        cube.SetAlliance(alliance);
+                        Score[alliance]++;
+                    }
+                }
+            }
+        }
+    }
+
+    public void SyncDiscsLocationRecieved(string clientId, string data) {
+        // x,z=id+
+        var dots = data.Split('+');
+
+        Score[0] = 0;
+        Score[1] = 0;
+
+        for (int i = 0; i < dots.Length; i++) {
+            var stam = dots[i].Split(',');
+            float x = float.Parse(stam[0]);
+            float z = float.Parse(stam[1].Split('=')[0]);
+            int id = int.Parse(stam[1].Split('=')[1]);
+
+            // Set position
+            var disk = Disks[id];
+            if (disk) {
+                disk.transform.position = new Vector3(x, transform.position.y, z);
+            }
+        }
+    }
+
 }

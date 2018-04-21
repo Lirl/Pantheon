@@ -167,7 +167,13 @@ public class Server : MonoBehaviour
                 Broadcast("SDISTROYDISK|" + int.Parse(aData[1]), clients);
                 break;
             case "CSETTILE":
-                Broadcast("SSETTILE|" + int.Parse(aData[1]) + "|" + int.Parse(aData[2]) + "|" + int.Parse(aData[3]), clients);
+                Broadcast("SSETTILE|" + aData[1] + "|" + int.Parse(aData[2]) + "|" + int.Parse(aData[3]), clients);
+                break;
+            case "CSYNCTILES":
+                Broadcast("SSYNCTILES|" + aData[1] + "|" + aData[2], clients);
+                break;
+            case "CCREATEPOWERUP":
+                Broadcast("SCREATEPOWERUP|" + int.Parse(aData[1]) + "|" + int.Parse(aData[2]) + "|" + int.Parse(aData[3]), clients);
                 break;
             case "CMSG":
                 Broadcast("SMSG|" + c.clientName + " : " + aData[1],clients);

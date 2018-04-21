@@ -104,6 +104,12 @@ public class Client : MonoBehaviour
             case "SSETTILE":
                 Board.Instance.HandleSetTileAlliance(int.Parse(aData[1]), int.Parse(aData[2]), int.Parse(aData[3]));
                 break;
+            case "SSYNCTILES":
+                Board.Instance.HandleSyncTiles(int.Parse(aData[1]), aData[2]);
+                break;
+            case "SCREATEPOWERUP":
+                Board.Instance.HandleCreatePowerUp(int.Parse(aData[1]), int.Parse(aData[2]), int.Parse(aData[2]));
+                break;
             case "SMSG":
                 Board.Instance.ChatMessage(aData[1]);
                 break; 
