@@ -263,8 +263,8 @@ public class Board : MonoBehaviour {
         Debug.Log("Attempting to load prefab " + "Characters/Character" + code);
         var prefab = Resources.Load("Characters/Character" + code) as GameObject;
 
-        var ins = Instantiate(prefab, hook.transform.position, Quaternion.identity);
-        ins.GetComponent<SpringJoint>().connectedAnchor = hook.transform.position;
+        var ins = Instantiate(prefab, hook.transform.position + new Vector3(0, 3f, 0), Quaternion.identity);
+        //ins.GetComponent<SpringJoint>().connectedAnchor = hook.transform.position;
         ins.GetComponent<SpringJoint>().connectedBody = hook.GetComponent<Rigidbody>();
         ins.GetComponent<Disk>().Init(alliance, isYourTurn);
         CurrentCharacter[alliance] = ins;
