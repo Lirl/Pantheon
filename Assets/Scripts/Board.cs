@@ -91,10 +91,6 @@ public class Board : MonoBehaviour {
         alertCanvas = GameObject.Find("MessageCanvas").GetComponent<CanvasGroup>();
         yourScore = GameObject.Find("YourScore");
         opponentScore = GameObject.Find("OpponentScore");
-        yourScore.GetComponentInChildren<Text>().color = isHost ? Color.red : Color.blue;
-        yourScore.GetComponentInChildren<Text>().text = "0";
-        opponentScore.GetComponentInChildren<Text>().color = isHost ? Color.blue : Color.red;
-        opponentScore.GetComponentInChildren<Text>().text = "0";
 
         WinMessage.SetActive(false);
         LoseMessage.SetActive(false);
@@ -112,6 +108,11 @@ public class Board : MonoBehaviour {
         } else {
             isHost = true;
         }
+
+        yourScore.GetComponentInChildren<Text>().color = isHost ? Color.blue : Color.red;
+        yourScore.GetComponentInChildren<Text>().text = "0";
+        opponentScore.GetComponentInChildren<Text>().color = isHost ? Color.red : Color.blue;
+        opponentScore.GetComponentInChildren<Text>().text = "0";
 
         // Client player has its camera rotate 180 degrees
         if (!isHost) {
@@ -315,7 +316,7 @@ public class Board : MonoBehaviour {
 
         // Alliance is of the opposing player
         // therefore we should play his move by moving his piece to according to his mouse position
-        // and releasing
+        // and releasing 
         GameObject disk = CurrentCharacter[alliance];
         if (!disk) {
             Debug.LogError("Release disk: Could not release disk of player " + alliance + " since its undefined");
@@ -643,26 +644,52 @@ public class Board : MonoBehaviour {
             }
         }
 
-        string res = sb.ToString();
-        res = res.Remove(sb.Length - 1);
+        string tiles = sb.ToString();
+        tiles = tiles.Remove(sb.Length - 1);
+
+        sb = new StringBuilder();
+        foreach(var pair in Disks) {
+            if(pair.Value) {
+                sb.Append(pair.Value.ToString() + '+');
+            }
+        }
+
+        string disks = sb.ToString();
+        if (disks.Length > 1) {
+            disks = disks.Remove(disks.Length - 1);
+        }
 
         if (client) {
-            client.Send("CSYNCTILES|" + (isHost ? 1 : 0) + "|" + res);
+            client.Send("CSYNCTILES|" + (isHost ? 1 : 0) + "|" + tiles + "|" + disks);
         } else {
-            HandleSyncTiles(isHost ? 1 : 0, res);
+            HandleSyncTiles(isHost ? 1 : 0, tiles, disks);
         }
 
     }
 
-    public void HandleSyncTiles(int clientId, string data) {
+    public void HandleSyncTiles(int clientId, string tilesData, string disksData) {
+
+
         // i,j=alliance+
-        Debug.Log("SyncTilesRecieved");
+        Debug.Log("SyncTilesRecieved : " + tilesData + " : " + disksData);
 
         if (clientId == (isHost ? 1 : 0)) {
             EndTurn();
         } else {
 
-            var dots = data.Split('+');
+            var dots = tilesData.Split('+');
+
+            Score[0] = 0;
+            Score[1] = 0;
+
+            for (int i = 0; i < MAP_WIDTH_REAL; i++) {
+                for (int j = 0; j < MAP_HEIGHT_REAL; j++) {
+                    var cube = Tiles[i, j].GetComponent<Cube>();
+                    if(cube) {
+                        cube.SetAlliance(-1);
+                    }
+                }
+            }
 
             for (int i = 0; i < dots.Length; i++) {
                 var stam = dots[i].Split(',');
@@ -670,15 +697,23 @@ public class Board : MonoBehaviour {
                 int y = int.Parse(stam[1].Split('=')[0]);
                 int alliance = int.Parse(stam[1].Split('=')[1]);
 
-                if (alliance != -1) {  // double checking
-                    var cube = Tiles[x, y].GetComponent<Cube>();
-                    if (cube.Alliance != alliance) {
-                        if (cube.Alliance != -1) {
-                            Score[cube.Alliance]--;
-                        }
-                        cube.SetAlliance(alliance);
-                        Score[alliance]++;
-                    }
+                var cube = Tiles[x, y].GetComponent<Cube>();
+                if(cube) {
+                    cube.SetAlliance(alliance);
+                    Score[alliance]++;
+                }
+            }
+
+            var disks = disksData.Split('+');
+
+            for (int i = 0; i < disks.Length; i++) {
+                var stam = disks[i].Split(',');
+                float x = float.Parse(stam[0]);
+                float z = float.Parse(stam[1].Split('=')[0]);
+                int id = int.Parse(stam[1].Split('=')[1]);
+
+                if (Disks[id] && Disks[id].gameObject) {
+                    Disks[id].gameObject.transform.position = new Vector3(x, 5.0f, z);
                 }
             }
         }

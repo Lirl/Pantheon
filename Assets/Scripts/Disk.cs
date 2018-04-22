@@ -124,7 +124,7 @@ public class Disk : MonoBehaviour {
         Debug.Log("SetPositionAndRelease : " + position);
         transform.position = position;
         Release();
-        Invoke("StopMoving", 3);
+        Invoke("StopMoving", 5);
         Debug.Log("StopMoving started" + position);
     }
 
@@ -165,6 +165,11 @@ public class Disk : MonoBehaviour {
 
     internal void Enlarge() {
         enlarge = true;
+    }
+
+    public override string ToString() {
+        var pos = transform.position;
+        return pos.x + "," + pos.z + "=" + Id;
     }
 
 }

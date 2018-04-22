@@ -170,7 +170,7 @@ public class Server : MonoBehaviour
                 Broadcast("SSETTILE|" + aData[1] + "|" + int.Parse(aData[2]) + "|" + int.Parse(aData[3]), clients);
                 break;
             case "CSYNCTILES":
-                Broadcast("SSYNCTILES|" + aData[1] + "|" + aData[2], clients);
+                Broadcast("SSYNCTILES|" + aData[1] + "|" + aData[2] + "|" + aData[3], clients);
                 break;
             case "CCREATEPOWERUP":
                 Broadcast("SCREATEPOWERUP|" + int.Parse(aData[1]) + "|" + int.Parse(aData[2]) + "|" + int.Parse(aData[3]), clients);

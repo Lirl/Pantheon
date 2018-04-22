@@ -25,16 +25,15 @@ public class Cube : MonoBehaviour {
 
     public void SetAlliance(int alliance) {
         Alliance = alliance;
-        if(alliance == -1) {
+        if (alliance == -1) {
             alliance = 0; // default material
         } else {
-            if(alliance == 0) {
+            if (alliance == 0) {
                 alliance = alliance + 2;
-            }
-            else {
+            } else {
                 alliance = alliance + 3;
             }
-            
+
         }
 
         // 0 - normal grey
@@ -47,13 +46,17 @@ public class Cube : MonoBehaviour {
         mesh.material = materials[alliance + ((X + Y) % 2 == 0 ? 1 : 0)];
     }
 
+    public override string ToString() {
+        return X + "," + Y + "=" + Alliance;
+    }
+
 
     private void OnTriggerEnter(Collider other) {
-        
+
         var disk = other.gameObject.GetComponent<Disk>();
 
         if (disk) {
-            
+
             Board.Instance.HandleSetTileAlliance(disk.Alliance, X, Y);
         }
     }
