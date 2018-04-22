@@ -29,10 +29,10 @@ public class PowerUp : MonoBehaviour {
 
     private void CreatePlus(int alliance, int xTile, int yTile) {
         Debug.Log("Creating plus");
-        for (int i = 0; i < Board.MAP_WIDTH; i++) {
+        for (int i = 0; i < Board.MAP_WIDTH_REAL; i++) {
             Board.Instance.SetTileAlliance(alliance, i, yTile);
         }
-        for (int i = 0; i < Board.MAP_HEIGHT; i++) {
+        for (int i = 0; i < Board.MAP_WIDTH_REAL; i++) {
             Board.Instance.SetTileAlliance(alliance, xTile, i);
         }
         Instantiate(effect, transform.position, Quaternion.identity);
