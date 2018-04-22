@@ -33,11 +33,13 @@ public class Board : MonoBehaviour {
     public GameObject DummyDisk;
 
     public CanvasGroup alertCanvas;
+    private GameObject yourScore;
+    private GameObject opponentScore;
     private float lastAlert;
     private bool alertActive;
     private bool gameIsOver;
     private float winTime;
-    public float gameTime = 90f;
+    public float gameTime = 10f;
 
     private bool isZoomedOut = false;
     private bool isZoomedIn = false;
@@ -50,6 +52,8 @@ public class Board : MonoBehaviour {
 
     public bool isHost;
     public Dictionary<int, Disk> Disks = new Dictionary<int, Disk>();
+    public GameObject WinMessage;
+    public GameObject LoseMessage;
 
     internal void SaveDisk(int id, Disk disk) {
         Disks.Add(id, disk);
@@ -85,6 +89,15 @@ public class Board : MonoBehaviour {
         TimeMessage = GameObject.Find("TimeMessage") as GameObject;
 
         alertCanvas = GameObject.Find("MessageCanvas").GetComponent<CanvasGroup>();
+        yourScore = GameObject.Find("YourScore");
+        opponentScore = GameObject.Find("OpponentScore");
+        yourScore.GetComponentInChildren<Text>().color = isHost ? Color.red : Color.blue;
+        yourScore.GetComponentInChildren<Text>().text = "0";
+        opponentScore.GetComponentInChildren<Text>().color = isHost ? Color.blue : Color.red;
+        opponentScore.GetComponentInChildren<Text>().text = "0";
+
+        WinMessage.SetActive(false);
+        LoseMessage.SetActive(false);
 
         /*if (highlightsContainer) {
             foreach (Transform t in highlightsContainer.transform) {
@@ -113,7 +126,20 @@ public class Board : MonoBehaviour {
 
         if (isHost) {
             Invoke("CreatePowerUp", 1f);
-            Invoke("CheckWinner", 90);
+            Invoke("CheckWinner", gameTime);
+        }
+    }
+
+    internal void HandleShowWinner(int alliance) {
+        Debug.Log("HandleShowWinner started");
+        if (Hand) {
+            Hand.SetActive(false);
+        }
+
+        if (alliance == (isHost ? 1 : 0)) {
+            WinMessage.SetActive(true);
+        } else {
+            LoseMessage.SetActive(true);
         }
     }
 
@@ -121,16 +147,20 @@ public class Board : MonoBehaviour {
 
         var pos = new Vector3(0, 0, 0);
         foreach (var pair in Disks) {
-            pos += pair.Value.transform.position;
+            if(pair.Value) {
+                pos += pair.Value.transform.position;
+            }
         }
 
+        var thresh = pos - prevDiskIdleResult;
+
         // Meaning disks stopped moving
-        if (pos == prevDiskIdleResult) {
-            Debug.Log("Disks stopped moving !");
+        if (Math.Abs(thresh.x + thresh.z) < 1) {
+            //Debug.Log("Disks stopped moving ! thresh " + (thresh.x + thresh.z));
             OnDisksIdle();
         } else {
             prevDiskIdleResult = pos;
-            Debug.Log("OnDisksIdleTrigger Invoke Started");
+            //Debug.Log("OnDisksIdleTrigger Invoke Started " + (thresh.x + thresh.z));
             Invoke("OnDisksIdleTrigger", 1);
         }
     }
@@ -143,13 +173,20 @@ public class Board : MonoBehaviour {
     }
 
     public void CheckWinner() {
+        Debug.Log("CheckWinner");
+        if (Score[0] >= Score[1]) {
+            if (client) {
+                client.Send("CSHOWINNER|0");
+            } else {
+                HandleShowWinner(0);
+            }
 
-        if (Score[0] == Score[1]) {
-            Debug.Log("Tie! 1 : " + Score[0] + " 2 : " + Score[1]);
-        } else if (Score[0] > Score[1]) {
-            Debug.Log("Player 2 is the winner! with a score of " + Score[0] + " . (opponent score is " + Score[1] + ")");
         } else {
-            Debug.Log("Player 1 is the winner! with a score of " + Score[1] + " . (opponent score is " + Score[0] + ")");
+            if (client) {
+                client.Send("CSHOWINNER|1");
+            } else {
+                HandleShowWinner(1);
+            }
         }
 
         gameIsOver = true;
@@ -246,7 +283,12 @@ public class Board : MonoBehaviour {
         }
 
         gameTime -= Time.deltaTime;
-        TimeMessage.GetComponentInChildren<Text>().text = gameTime.ToString().Substring(0, 5);
+        if (gameTime >= 0 && !gameIsOver) {
+            TimeMessage.GetComponentInChildren<Text>().text = Math.Floor(gameTime).ToString();
+        }
+
+        yourScore.GetComponentInChildren<Text>().text = Score[isHost ? 1 : 0].ToString();
+        opponentScore.GetComponentInChildren<Text>().text = Score[isHost ? 0 : 1].ToString();
 
         if (isZoomedIn) {
             if (Camera.main.orthographicSize >= 45) {
@@ -302,19 +344,21 @@ public class Board : MonoBehaviour {
 
     internal GameObject HandleCreatePowerUp(int code, int x, int y) {
         var toInstantiate = Resources.Load("Characters/PowerUps" + code) as GameObject;
-        Debug.Log(x + ", " + y);
-        GameObject rune = Instantiate(toInstantiate, Tiles[x, y].transform.position + new Vector3(0, 2f, 0), Quaternion.Euler(new Vector3(45, 45, 45)));
-        var runeScript = rune.GetComponent<PowerUp>();
-        runeScript.code = code;
-        runeScript.xTile = x;
-        runeScript.yTile = y;
+        if (Tiles[x, y] && toInstantiate) {
+            GameObject rune = Instantiate(toInstantiate, Tiles[x, y].transform.position + new Vector3(0, 2f, 0), Quaternion.Euler(new Vector3(45, 45, 45)));
+            var runeScript = rune.GetComponent<PowerUp>();
+            runeScript.code = code;
+            runeScript.xTile = x;
+            runeScript.yTile = y;
 
-        if (isHost) {
-            Invoke("CreatePowerUp", 10f);
+            if (isHost) {
+                Invoke("CreatePowerUp", 10f);
+            }
+
+            //Instantiate(powerUp[UnityEngine.Random.Range(0, powerUp.Length)], location + new Vector3(0, 1.4f,0), Quaternion.identity);
+            return rune;
         }
-
-        //Instantiate(powerUp[UnityEngine.Random.Range(0, powerUp.Length)], location + new Vector3(0, 1.4f,0), Quaternion.identity);
-        return rune;
+        return null;
     }
 
 
@@ -329,8 +373,8 @@ public class Board : MonoBehaviour {
 
         Debug.Log("Attempting to load prefab " + "Characters/Character" + code);
         var prefab = Resources.Load("Characters/Character" + code) as GameObject;
-        var offset = (code == 3 ? 7f : 3f) ;
-        var ins = Instantiate(prefab, hook.transform.position + new Vector3(0, offset, 0), Quaternion.identity);
+        var offset = (code == 3 ? 7f : 3f);
+        var ins = Instantiate(prefab, hook.transform.position + new Vector3(0, 3f, 0), Quaternion.identity);
 
         ins.GetComponent<SpringJoint>().connectedBody = hook.GetComponent<Rigidbody>();
         ins.GetComponent<Disk>().Init(alliance, isYourTurn);
@@ -449,7 +493,7 @@ public class Board : MonoBehaviour {
         Deck = new List<int>();
         for (int i = 0; i < 30; i++) {
             // Set deck currently with values from 0 to 1
-            Deck.Add(UnityEngine.Random.Range(2, 3));
+            Deck.Add(UnityEngine.Random.Range(0, 4));
         }
 
         // Reset score
