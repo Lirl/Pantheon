@@ -28,6 +28,7 @@ public class PowerUp : MonoBehaviour {
     }
 
     private void CreatePlus(int alliance, int xTile, int yTile) {
+        Debug.Log("Creating plus");
         for (int i = 0; i < Board.MAP_WIDTH; i++) {
             Board.Instance.SetTileAlliance(alliance, i, yTile);
         }

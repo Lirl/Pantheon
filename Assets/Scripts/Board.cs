@@ -329,8 +329,8 @@ public class Board : MonoBehaviour {
 
         Debug.Log("Attempting to load prefab " + "Characters/Character" + code);
         var prefab = Resources.Load("Characters/Character" + code) as GameObject;
-
-        var ins = Instantiate(prefab, hook.transform.position + new Vector3(0, 3f, 0), Quaternion.identity);
+        var offset = (code == 3 ? 7f : 3f) ;
+        var ins = Instantiate(prefab, hook.transform.position + new Vector3(0, offset, 0), Quaternion.identity);
 
         ins.GetComponent<SpringJoint>().connectedBody = hook.GetComponent<Rigidbody>();
         ins.GetComponent<Disk>().Init(alliance, isYourTurn);
@@ -449,7 +449,7 @@ public class Board : MonoBehaviour {
         Deck = new List<int>();
         for (int i = 0; i < 30; i++) {
             // Set deck currently with values from 0 to 1
-            Deck.Add(UnityEngine.Random.Range(0, 1));
+            Deck.Add(UnityEngine.Random.Range(2, 3));
         }
 
         // Reset score

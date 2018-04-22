@@ -107,6 +107,11 @@ public class Disk : MonoBehaviour {
     }
 
     public void Release() {
+        Debug.Log(gameObject.tag);
+        if (gameObject.tag == ("Character3")) {
+            Debug.Log("Increasing y");
+            gameObject.transform.position += new Vector3(0, 1f, 0);
+        }
         isMouseDown = false;
         Rigidbody.isKinematic = false;
         if (line) {
