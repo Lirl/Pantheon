@@ -32,7 +32,7 @@ public class PowerUp : MonoBehaviour {
         for (int i = 0; i < Board.MAP_WIDTH_REAL; i++) {
             Board.Instance.HandleSetTileAlliance(alliance, i, yTile);
         }
-        for (int i = 0; i < Board.MAP_WIDTH_REAL; i++) {
+        for (int i = 0; i < Board.MAP_HEIGHT_REAL; i++) {
             Board.Instance.HandleSetTileAlliance(alliance, xTile, i);
         }
         Instantiate(effect, transform.position, Quaternion.identity);
