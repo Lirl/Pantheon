@@ -41,10 +41,10 @@ public class Explosion : MonoBehaviour {
         Collider[] toBlast = Physics.OverlapSphere(transform.position, radius + (gameObject.transform.localScale.x / 6));
 
         foreach (Collider c in toBlast) {
-            Cube rb = c.GetComponent<Cube>();
-            if (rb) {
+            Cube cube = c.GetComponent<Cube>();
+            if (cube) {
                 //Debug.Log(c.name);
-                rb.SetAlliance(disk.Alliance);
+                Board.Instance.HandleSetTileAlliance(disk.Alliance, cube.X, cube.Y);
             }
         }
         Instantiate(explosionEffect, transform.position, Quaternion.identity);

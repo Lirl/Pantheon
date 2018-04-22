@@ -66,7 +66,7 @@ public class Disk : MonoBehaviour {
             }
         }
         if (enlarge) {
-            if (gameObject.transform.localScale.x < 9 && gameObject.transform.localScale.z < 9) {
+            if (gameObject.transform.localScale.x < 18 && gameObject.transform.localScale.z < 18) {
                 gameObject.transform.position += new Vector3(0, 0.05f, 0);
                 gameObject.transform.localScale += new Vector3(0.1f, 0, 0.1f);
             } else {
