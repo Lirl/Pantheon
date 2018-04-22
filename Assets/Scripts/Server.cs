@@ -175,6 +175,9 @@ public class Server : MonoBehaviour
             case "CCREATEPOWERUP":
                 Broadcast("SCREATEPOWERUP|" + int.Parse(aData[1]) + "|" + int.Parse(aData[2]) + "|" + int.Parse(aData[3]), clients);
                 break;
+            case "CSHOWINNER":
+                Broadcast("SSHOWINNER|" + int.Parse(aData[1]), clients);
+                break;
             case "CMSG":
                 Broadcast("SMSG|" + c.clientName + " : " + aData[1],clients);
                 break;

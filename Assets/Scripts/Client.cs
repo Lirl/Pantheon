@@ -110,6 +110,9 @@ public class Client : MonoBehaviour
             case "SCREATEPOWERUP":
                 Board.Instance.HandleCreatePowerUp(int.Parse(aData[1]), int.Parse(aData[2]), int.Parse(aData[2]));
                 break;
+            case "SSHOWINNER":
+                Board.Instance.HandleShowWinner(int.Parse(aData[1]));
+                break;
             case "SMSG":
                 Board.Instance.ChatMessage(aData[1]);
                 break; 

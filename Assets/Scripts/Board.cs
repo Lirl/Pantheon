@@ -566,8 +566,6 @@ public class Board : MonoBehaviour {
                 cube.SetAlliance(alliance);
             }
         }
-
-        Score[alliance]++;
     }
 
     public void Alert(string text) {
