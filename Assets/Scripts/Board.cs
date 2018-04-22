@@ -496,6 +496,10 @@ public class Board : MonoBehaviour {
             Deck.Add(UnityEngine.Random.Range(0, 4));
         }
 
+        for (int i = 0; i < 2; i++) {
+            DrawCard();
+        }
+
         // Reset score
         Score[0] = 0;
         Score[1] = 0;

@@ -124,6 +124,13 @@ public class Disk : MonoBehaviour {
         Debug.Log("SetPositionAndRelease : " + position);
         transform.position = position;
         Release();
+        Invoke("StopMoving", 3);
+        Debug.Log("StopMoving started" + position);
+    }
+
+    public void StopMoving() {
+        Debug.Log("Stop Moving");
+        Rigidbody.velocity = Vector3.zero;
     }
 
     IEnumerator UnHook() {
