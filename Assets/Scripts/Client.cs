@@ -127,7 +127,8 @@ public class Client : MonoBehaviour
         players.Add(c);
 
         if (players.Count == 2)
-            GameManager.Instance.StartGame();
+            GameObject.Find("Animation").GetComponent<Animator>().enabled = true;
+            //GameManager.Instance.StartGame();
     }
 
     private void OnApplicationQuit()
