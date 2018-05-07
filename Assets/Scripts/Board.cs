@@ -54,6 +54,7 @@ public class Board : MonoBehaviour {
     public Dictionary<int, Disk> Disks = new Dictionary<int, Disk>();
     public GameObject WinMessage;
     public GameObject LoseMessage;
+    public GameObject BackToMenu;
 
     internal void SaveDisk(int id, Disk disk) {
         Disks.Add(id, disk);
@@ -94,6 +95,7 @@ public class Board : MonoBehaviour {
 
         WinMessage.SetActive(false);
         LoseMessage.SetActive(false);
+        BackToMenu.SetActive(false);
 
         /*if (highlightsContainer) {
             foreach (Transform t in highlightsContainer.transform) {
@@ -142,6 +144,7 @@ public class Board : MonoBehaviour {
         } else {
             LoseMessage.SetActive(true);
         }
+        BackToMenu.SetActive(true);
     }
 
     public void OnDisksIdleTrigger() {
