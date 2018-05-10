@@ -4,10 +4,11 @@ using UnityEngine;
 using System;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
+using UnityEngine.UI;
 
 public class User : MonoBehaviour {
 
-    public static User user;
+    public static User instance;
 
     public string userName;
     public List<int> disks;
@@ -15,10 +16,12 @@ public class User : MonoBehaviour {
     public int losses;
 
     void Awake () {
-        if (user == null) {
+        Debug.Log(Application.persistentDataPath);
+        if (instance == null) {
             DontDestroyOnLoad(gameObject);
-            user = this;
-        } else if (user != this) {
+            instance = this;
+            this.Load();
+        } else if (instance != this) {
             Destroy(gameObject);
         }   
 	}
@@ -27,23 +30,25 @@ public class User : MonoBehaviour {
         BinaryFormatter bf = new BinaryFormatter();
         FileStream file = File.Create(Application.persistentDataPath + "/userInfo.dat");
 
-        UserData userData = new UserData {
-            userName = this.userName,
-            disks = this.disks,
-            wins = this.wins,
-            losses = this.losses
-        };
+        UserData userData = new UserData();
+        userData.userName = instance.userName;
+        userData.disks = instance.disks;
+        userData.wins = instance.wins;
+        userData.losses = instance.losses;
 
+        Debug.Log("Saved");
         bf.Serialize(file, userData);
         file.Close();
     }
 
     public void Load() {
         if(File.Exists(Application.persistentDataPath + "/userInfo.dat")) {
+            Debug.Log("File Exists");
             BinaryFormatter bf = new BinaryFormatter();
             FileStream file = File.Open(Application.persistentDataPath + "/userInfo.dat", FileMode.Open);
 
             UserData userDate = (UserData)bf.Deserialize(file);
+            Debug.Log(userDate.userName);
             disks = userDate.disks;
             userName = userDate.userName;
             wins = userDate.wins;
@@ -54,11 +59,17 @@ public class User : MonoBehaviour {
 
     }
 
-    public void NewUser(string name) {
-        user.userName = name;
-        user.wins = 0;
-        user.losses = 0;
-        user.disks = new List<int>();
+    public void NewUser() {
+        //Debug.LogError(Application.persistentDataPath);
+        var texts = FindObjectsOfType<Text>();
+        string newName = texts[0].text;
+
+        Debug.Log(newName);
+        instance.userName = newName;
+        instance.disks = new List<int>();
+        instance.wins = 0;
+        instance.losses = 0;
+        Save();
     }
 }
 

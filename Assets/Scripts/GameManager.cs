@@ -8,6 +8,7 @@ public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { set; get; }
 
+    public User user;
     public GameObject mainMenu;
     public GameObject serverMenu;
     public GameObject connectMenu;
@@ -20,6 +21,7 @@ public class GameManager : MonoBehaviour
     private void Start()
     {
         Instance = this;
+        user = FindObjectOfType<User>();
         serverMenu.SetActive(false);
         connectMenu.SetActive(false);
         DontDestroyOnLoad(gameObject);
@@ -96,5 +98,10 @@ public class GameManager : MonoBehaviour
     {
         Debug.Log("about to load main");
         SceneManager.LoadScene("Main");
+    }
+
+
+    public void SaveProgress() {
+        user.Save();
     }
 }
