@@ -14,7 +14,6 @@ public class CheckIfFirstPlay : MonoBehaviour {
 	void Awake () {
         if (!File.Exists(Application.persistentDataPath + "/userInfo.dat")) {
             SceneManager.LoadScene("CreateUser");
-
         }
         else {
             user.Load();

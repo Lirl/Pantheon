@@ -14,6 +14,7 @@ public class User : MonoBehaviour {
     public List<int> disks;
     public int wins;
     public int losses;
+    public int gold;
 
     void Awake () {
         Debug.Log(Application.persistentDataPath);
@@ -35,24 +36,24 @@ public class User : MonoBehaviour {
         userData.disks = instance.disks;
         userData.wins = instance.wins;
         userData.losses = instance.losses;
+        userData.gold = instance.gold;
 
-        Debug.Log("Saved");
+
         bf.Serialize(file, userData);
         file.Close();
     }
 
     public void Load() {
         if(File.Exists(Application.persistentDataPath + "/userInfo.dat")) {
-            Debug.Log("File Exists");
             BinaryFormatter bf = new BinaryFormatter();
             FileStream file = File.Open(Application.persistentDataPath + "/userInfo.dat", FileMode.Open);
 
             UserData userDate = (UserData)bf.Deserialize(file);
-            Debug.Log(userDate.userName);
             disks = userDate.disks;
             userName = userDate.userName;
             wins = userDate.wins;
             losses = userDate.losses;
+            gold = userDate.gold;
 
             file.Close();
         }
@@ -64,11 +65,11 @@ public class User : MonoBehaviour {
         var texts = FindObjectsOfType<Text>();
         string newName = texts[0].text;
 
-        Debug.Log(newName);
         instance.userName = newName;
         instance.disks = new List<int>();
         instance.wins = 0;
         instance.losses = 0;
+        instance.gold = 1000;
         Save();
     }
 }
@@ -79,4 +80,5 @@ class UserData {
     public List<int> disks;
     public int wins;
     public int losses;
+    public int gold;
 }
