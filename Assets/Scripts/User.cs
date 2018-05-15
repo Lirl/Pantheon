@@ -12,12 +12,13 @@ public class User : MonoBehaviour {
 
     public string userName;
     public List<int> disks;
+    public List<int> deck;
     public int wins;
     public int losses;
     public int gold;
+    public int god;
 
     void Awake () {
-        Debug.Log(Application.persistentDataPath);
         if (instance == null) {
             DontDestroyOnLoad(gameObject);
             instance = this;
@@ -37,6 +38,8 @@ public class User : MonoBehaviour {
         userData.wins = instance.wins;
         userData.losses = instance.losses;
         userData.gold = instance.gold;
+        userData.deck = instance.deck;
+        userData.god = instance.god;
 
 
         bf.Serialize(file, userData);
@@ -54,6 +57,8 @@ public class User : MonoBehaviour {
             wins = userDate.wins;
             losses = userDate.losses;
             gold = userDate.gold;
+            deck = userDate.deck;
+            god = userDate.god;
 
             file.Close();
         }
@@ -66,10 +71,12 @@ public class User : MonoBehaviour {
         string newName = texts[0].text;
 
         instance.userName = newName;
-        instance.disks = new List<int>();
+        instance.disks = new List<int> { 0, 1, 2 };
         instance.wins = 0;
         instance.losses = 0;
+        instance.god = 0;
         instance.gold = 1000;
+        instance.deck = new List<int> { 0, 1, 2 };
         Save();
     }
 }
@@ -78,7 +85,9 @@ public class User : MonoBehaviour {
 class UserData {
     public string userName;
     public List<int> disks;
+    public List<int> deck;
     public int wins;
     public int losses;
     public int gold;
+    public int god;
 }
