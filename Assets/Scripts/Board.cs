@@ -68,7 +68,7 @@ public class Board : MonoBehaviour {
         }
     }
 
-    private bool isYourTurn;
+    public bool isYourTurn;
     private bool hasKilled;
 
     private Vector2 mouseOver;
@@ -496,8 +496,7 @@ public class Board : MonoBehaviour {
         // Create deck list
         Deck = new List<int>();
         for (int i = 0; i < 30; i++) {
-            // Set deck currently with values from 0 to 1
-            Deck.Add(UnityEngine.Random.Range(0, 4));
+            Deck.Add(User.instance.deck[UnityEngine.Random.Range(0, User.instance.deck.Count)]);
         }
 
         for (int i = 0; i < 2; i++) {
@@ -531,6 +530,7 @@ public class Board : MonoBehaviour {
                     ins.GetComponent<Cube>().Init(-1, row / 3, column / 3); // might be redundent as this is default
                     Tiles[row / 3, column / 3] = ins;
                 }//row == -1 || row == MAP_WIDTH ||
+                /*
                 if (row == -1 || row == MAP_WIDTH) {
                     if (column < (float)(MAP_HEIGHT / 3) || column > (float)((2.0f / 3.0f) * MAP_HEIGHT)) {
                         Instantiate(cubeWall, new Vector3(row, 0.5f, column) - boardOffset, Quaternion.identity);
@@ -538,6 +538,7 @@ public class Board : MonoBehaviour {
                         Instantiate(waterCube, new Vector3(row, -1f, column) - boardOffset, Quaternion.identity);
                     }
                 }
+                */
             }
         }
     }

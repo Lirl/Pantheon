@@ -13,6 +13,7 @@ public class PlayerStats : MonoBehaviour {
     public TextMeshProUGUI Games;
     public TextMeshProUGUI Wins;
     public TextMeshProUGUI Gold;
+    public TextMeshProUGUI Name;
 
     // Use this for initialization
     void Start () {
@@ -23,6 +24,7 @@ public class PlayerStats : MonoBehaviour {
         Games.text = "Games: " + games.ToString();
         Wins.text = "Wins: " + wins.ToString();
         Gold.text = "Gold: " + gold.ToString();
+        Name.text = player.userName;
 	}
 	
 	// Update is called once per frame

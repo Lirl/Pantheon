@@ -17,6 +17,7 @@ public class User : MonoBehaviour {
     public int losses;
     public int gold;
     public int god;
+    public static int handNextSlotIndex = 0;
 
     void Awake () {
         if (instance == null) {
@@ -71,12 +72,13 @@ public class User : MonoBehaviour {
         string newName = texts[0].text;
 
         instance.userName = newName;
-        instance.disks = new List<int> { 0, 1, 2 };
+        instance.disks = new List<int> { 3 };
         instance.wins = 0;
         instance.losses = 0;
         instance.god = 0;
         instance.gold = 1000;
         instance.deck = new List<int> { 0, 1, 2 };
+        instance.deck.Capacity = 5;
         Save();
     }
 }

@@ -153,7 +153,8 @@ MonoBehaviour:
   Alliance: 0
   Health: -1
   Attack: 1
-  Id: -1
+  Id: 3
+  classType: 0
   Enable: 1
 --- !u!120 &120805790926797700
 LineRenderer:
