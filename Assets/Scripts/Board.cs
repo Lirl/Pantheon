@@ -6,8 +6,9 @@ using UnityEngine.SceneManagement;
 using System;
 using UnityEngine.EventSystems;
 using System.Text;
+using Photon;
 
-public class Board : MonoBehaviour {
+public class Board : Photon.PunBehaviour {
     public static Board Instance { set; get; }
     public int MaxScore { get; private set; }
     public GameObject Hand;
@@ -23,7 +24,7 @@ public class Board : MonoBehaviour {
     public const int MAP_HEIGHT_REAL = 30;
 
     public int powerUpsAmount = 2;
-    public GameObject[,] Tiles = new GameObject[MAP_WIDTH, MAP_HEIGHT];
+    public GameObject[,] Tiles = new GameObject[MAP_WIDTH_REAL, MAP_HEIGHT_REAL];
     public int[] Score = new int[2]; // Score[0] <= Host. Score[1] <= Client
 
     public Transform chatMessageContainer;
@@ -44,7 +45,7 @@ public class Board : MonoBehaviour {
     private bool isZoomedOut = false;
     private bool isZoomedIn = false;
 
-    public int TurnCounter = 0;
+    public int TurnCounter = 1;
     public List<int> Deck;
 
     public Vector3 boardOffset = new Vector3(29.0f, 0, 44.0f);
@@ -61,14 +62,13 @@ public class Board : MonoBehaviour {
     }
 
     internal void OnDiskReleased(Disk disk, Vector3 pos) {
-        if (client) {
-            client.Send("CRELEASEDISK|" + disk.Alliance + "|" + pos.x + "|" + pos.z);
-        } else {
-            ReleaseDisk(disk.Alliance, pos.x, pos.z);
-        }
+        ReleaseDisk(disk.Alliance, pos.x, pos.z);
     }
 
     public bool isYourTurn;
+
+    public bool TurnHasEnded { get; private set; }
+
     private bool hasKilled;
 
     private Vector2 mouseOver;
@@ -83,13 +83,15 @@ public class Board : MonoBehaviour {
     private Client client;
     private Vector3 prevDiskIdleResult = new Vector3(-1, -1, -1);
 
+    public string SyncTilesString;
+
     private void Start() {
         Instance = this;
         client = FindObjectOfType<Client>();
         Hand = GameObject.Find("Hand");
         TimeMessage = GameObject.Find("TimeMessage") as GameObject;
 
-        alertCanvas = GameObject.Find("MessageCanvas").GetComponent<CanvasGroup>();
+        alertCanvas = GameObject.Find("AlertText").GetComponent<CanvasGroup>();
         yourScore = GameObject.Find("YourScore");
         opponentScore = GameObject.Find("OpponentScore");
 
@@ -103,13 +105,14 @@ public class Board : MonoBehaviour {
             }
         }*/
 
-        if (client) {
-            isHost = client.isHost;
+        if (PhotonNetwork.connected) {
+            isHost = GameManager.Instance.isHost;
             //Alert(client.players[0].name + " versus " + client.players[1].name);
-            Alert(isHost ? "I am Host" : "I am Client");
         } else {
             isHost = true;
         }
+
+        Alert(isHost ? "I am Host" : "I am Client");
 
         yourScore.GetComponentInChildren<Text>().color = isHost ? Color.blue : Color.red;
         yourScore.GetComponentInChildren<Text>().text = "0";
@@ -121,17 +124,21 @@ public class Board : MonoBehaviour {
             Camera.main.transform.rotation = Quaternion.Euler(90, 180, 0);
         }
 
-        // Host starts(Trust me dont change that)
-        isYourTurn = !isHost;
-
         GenerateBoard();
-        StartTurn();
+
+        // Disable hand
+        if (Hand) {
+            Hand.SetActive(false);
+        }
 
         if (isHost) {
+            // Host starts
+            StartTurn();
             Invoke("CreatePowerUp", 1f);
             Invoke("CheckWinner", gameTime);
         }
     }
+
 
     internal void HandleShowWinner(int alliance) {
         Debug.Log("HandleShowWinner started");
@@ -151,7 +158,7 @@ public class Board : MonoBehaviour {
 
         var pos = new Vector3(0, 0, 0);
         foreach (var pair in Disks) {
-            if(pair.Value) {
+            if (pair.Value) {
                 pos += pair.Value.transform.position;
             }
         }
@@ -172,25 +179,16 @@ public class Board : MonoBehaviour {
     public void OnDisksIdle() {
         Debug.Log("OnDisksIdle");
         if (isYourTurn) {
-            SyncTiles();
+            EndTurn();
         }
     }
 
     public void CheckWinner() {
         Debug.Log("CheckWinner");
         if (Score[0] >= Score[1]) {
-            if (client) {
-                client.Send("CSHOWINNER|0");
-            } else {
-                HandleShowWinner(0);
-            }
-
+            HandleShowWinner(0);
         } else {
-            if (client) {
-                client.Send("CSHOWINNER|1");
-            } else {
-                HandleShowWinner(1);
-            }
+            HandleShowWinner(1);
         }
 
         gameIsOver = true;
@@ -205,26 +203,25 @@ public class Board : MonoBehaviour {
         if (gameIsOver) {
             return;
         }
+        
+        isYourTurn = true;
+        TurnHasEnded = false;
 
-        TurnCounter++;
-        isYourTurn = !isYourTurn;
+        Alert("Player " + (isHost ? 1 : 2) + " turn #" + TurnCounter + " YourTurn: " + isYourTurn);
+        Debug.Log("Player " + (isHost ? 1 : 2) + " turn #" + TurnCounter + " YourTurn: " + isYourTurn);
 
-        Debug.Log("Player " + (isYourTurn ? 1 : 2) + " turn #" + TurnCounter);
-        if (isYourTurn) {
-            // Add a new card to player hand (current turn)
-            DrawCard();
+        Alert("Player " + (isHost ? 1 : 2) + " turn #" + TurnCounter);
+        // Add a new card to player hand (current turn)
+        DrawCard();
 
-            if (Hand) {
-                Debug.Log("Setting Hand ACTIVE for " + (isHost ? 1 : 2) + " turn #" + TurnCounter);
-                Hand.SetActive(true);
-            }
-            isZoomedOut = true;
-        } else {
-            if (Hand) {
-                Debug.Log("Setting Hand NOT-ACTIVE for " + (isHost ? 1 : 2) + " turn #" + TurnCounter);
-                Hand.SetActive(false);
-            }
+        // 10 seconds turn
+        //Invoke("EndTurn", 10);
+
+        if (Hand) {
+            Hand.SetActive(true);
         }
+
+        isZoomedOut = true;
     }
 
     internal void HandleDestroyDisk(int id) {
@@ -235,7 +232,7 @@ public class Board : MonoBehaviour {
     }
 
     internal void DestroyDisk(Disk disk) {
-        client.Send("CDISTROYDISK|" + disk.Id);
+        HandleDestroyDisk(disk.Id);
     }
 
     internal bool isActiveDisk(GameObject gameObject) {
@@ -270,12 +267,7 @@ public class Board : MonoBehaviour {
             Hand.SetActive(false);
         }
 
-        if (client) {
-            Debug.Log("Fire CCREATEDISK");
-            client.Send("CCREATEDISK|" + (isHost ? 1 : 0) + "|" + code);
-        } else {
-            CreateDisk((isHost ? 1 : 0), code);
-        }
+        CreateDisk((isHost ? 1 : 0), code);
     }
 
     private void Update() {
@@ -336,20 +328,19 @@ public class Board : MonoBehaviour {
         }
     }
     internal void CreatePowerUp() {
+        return;
         int x = UnityEngine.Random.Range(1, MAP_WIDTH_REAL - 1);
         int y = UnityEngine.Random.Range(1, MAP_HEIGHT_REAL - 1);
         int amount = UnityEngine.Random.Range(0, powerUpsAmount);
-        if (client) {
-            client.Send("CCREATEPOWERUP|" + amount + "|" + x + "|" + y);
-        } else {
-            HandleCreatePowerUp(amount, x, y);
-        }
+
+        HandleCreatePowerUp(amount, x, y);
+
     }
 
     internal GameObject HandleCreatePowerUp(int code, int x, int y) {
         var toInstantiate = Resources.Load("Characters/PowerUps" + code) as GameObject;
         if (Tiles[x, y] && toInstantiate) {
-            GameObject rune = Instantiate(toInstantiate, Tiles[x, y].transform.position + new Vector3(0, 2f, 0), Quaternion.Euler(new Vector3(45, 45, 45)));
+            GameObject rune = PhotonNetwork.Instantiate("Characters/PowerUps" + code, Tiles[x, y].transform.position + new Vector3(0, 2f, 0), Quaternion.Euler(new Vector3(45, 45, 45)), 0);
             var runeScript = rune.GetComponent<PowerUp>();
             runeScript.code = code;
             runeScript.xTile = x;
@@ -365,7 +356,6 @@ public class Board : MonoBehaviour {
         return null;
     }
 
-
     internal GameObject CreateDisk(int alliance, int code) {
         Debug.Log("CreateDisk excepted. alliance = " + alliance + " code = " + code);
         GameObject hook;
@@ -375,10 +365,16 @@ public class Board : MonoBehaviour {
             hook = GameObject.Find("ClientHook");
         }
 
-        Debug.Log("Attempting to load prefab " + "Characters/Character" + code);
+        Debug.Log("Attempting to load prefab " + "Characters/Character" + code + " for alliance " + alliance + " isYourTurn " + isYourTurn);
         var prefab = Resources.Load("Characters/Character" + code) as GameObject;
         var offset = (code == 3 ? 7f : 3f);
-        var ins = Instantiate(prefab, hook.transform.position + new Vector3(0, 3f, 0), Quaternion.identity);
+        GameObject ins;
+        if (PhotonNetwork.connected) {
+            ins = PhotonNetwork.Instantiate("Characters/Character" + code, hook.transform.position + new Vector3(0, 3f, 0), Quaternion.identity, 0);
+        } else {
+            ins = Instantiate(prefab, hook.transform.position + new Vector3(0, 3f, 0), Quaternion.identity);
+        }
+        
 
         ins.GetComponent<SpringJoint>().connectedBody = hook.GetComponent<Rigidbody>();
         ins.GetComponent<Disk>().Init(alliance, isYourTurn);
@@ -392,7 +388,6 @@ public class Board : MonoBehaviour {
         return ins;
     }
 
-
     internal GameObject CreateDisk(int alliance) {
         GameObject hook;
         if (alliance == 1) {
@@ -401,7 +396,7 @@ public class Board : MonoBehaviour {
             hook = GameObject.Find("ClientHook");
         }
 
-        var ins = Instantiate(DummyDisk, hook.transform.position, Quaternion.identity);
+        var ins = PhotonNetwork.Instantiate(DummyDisk.name, hook.transform.position, Quaternion.identity, 0);
         ins.GetComponent<SpringJoint>().connectedAnchor = hook.transform.position;
         ins.GetComponent<SpringJoint>().connectedBody = hook.GetComponent<Rigidbody>();
         ins.GetComponent<Disk>().Init(alliance);
@@ -416,14 +411,14 @@ public class Board : MonoBehaviour {
     }
 
     internal GameObject CreateDisk(float x, float y) {
-        return Instantiate(DummyDisk, new Vector3(x, 0, y) - boardOffset, Quaternion.identity);
+        return PhotonNetwork.Instantiate(DummyDisk.name, new Vector3(x, 0, y) - boardOffset, Quaternion.identity, 0);
     }
     internal GameObject CreateDisk(GameObject go, int x, int y) {
-        return Instantiate(go, new Vector3(x, 0, y) - boardOffset, Quaternion.identity);
+        return PhotonNetwork.Instantiate(go.name, new Vector3(x, 0, y) - boardOffset, Quaternion.identity, 0);
     }
     internal GameObject CreateDisk(GameObject go, Vector3 position) {
         Debug.Log("Creating disk " + position);
-        var ins = Instantiate(go, position, Quaternion.identity);
+        var ins = PhotonNetwork.Instantiate(go.name, position, Quaternion.identity, 0);
         ins.GetComponent<SpringJoint>().connectedAnchor = new Vector3(0, 1.9f, 0);
         return ins;
     }
@@ -443,27 +438,30 @@ public class Board : MonoBehaviour {
             mouseOver.y = -1;
         }
     }
-    /*private void UpdatePieceDrag(Piece p)
-    {
-        if (!Camera.main)
-        {
-            Debug.Log("Unable to find main camera");
-            return;
-        }
-
-        RaycastHit hit;
-        if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit, 25.0f, LayerMask.GetMask("Board")))
-        {
-            p.transform.position = hit.point + Vector3.up;
-        }
-    }*/
 
     private void EndTurn() {
-        Debug.Log("EndTurn");
-        if (client) {
-            client.Send("CSTARTTURN");
-        } else {
-            StartTurn();
+        if (isYourTurn && !TurnHasEnded) {
+            TurnHasEnded = true;
+
+            Debug.Log("EndTurn");
+
+            // That's all you need to do for switching the turn
+            // BoardSync will sync that data, and trigger SetTurn on the other player.
+            // By doing so, the other player will trigger StartTurn, that will continue game loop as normal
+            TurnCounter++;
+            PhotonNetwork.RaiseEvent(0, GetTilesAsString(), true, null);
+            isYourTurn = false;
+
+            Debug.Log("TurnCounter is now : " + TurnCounter);
+
+            // StartTurn(); start turn is invoked after a sync
+            if (!PhotonNetwork.connected) {
+                StartTurn();
+            }
+
+            if (Hand) {
+                Hand.SetActive(false);
+            }
         }
     }
 
@@ -478,25 +476,12 @@ public class Board : MonoBehaviour {
         gameIsOver = true;
     }
 
-    /*private void Highlight()
-    {
-        foreach (Transform t in highlightsContainer.transform)
-        {
-            t.position = Vector3.down * 100;
-        }
-
-        if (forcedPieces.Count > 0)
-            highlightsContainer.transform.GetChild(0).transform.position = forcedPieces[0].transform.position + Vector3.down * 0.1f;
-
-        if (forcedPieces.Count > 1)
-            highlightsContainer.transform.GetChild(1).transform.position = forcedPieces[1].transform.position + Vector3.down * 0.1f;
-    }*/
-
     private void GenerateBoard() {
         // Create deck list
         Deck = new List<int>();
         for (int i = 0; i < 30; i++) {
-            Deck.Add(User.instance.deck[UnityEngine.Random.Range(0, User.instance.deck.Count)]);
+            // Set deck currently with values from 0 to 1
+            Deck.Add(0); // UnityEngine.Random.Range(0, 4));
         }
 
         for (int i = 0; i < 2; i++) {
@@ -522,34 +507,15 @@ public class Board : MonoBehaviour {
         }*/
 
         // fill 2D Array with -1
-        for (int row = -1; row < MAP_WIDTH + 1; row++) {
-            for (int column = -1; column < MAP_HEIGHT + 1; column++) {
+        for (int row = 0; row < MAP_WIDTH; row++) {
+            for (int column = 0; column < MAP_HEIGHT; column++) {
                 if (row % 3 == 0 && column % 3 == 0) {
                     var ins = Instantiate(go, new Vector3(row, -0.4f, column) - boardOffset, Quaternion.identity);
                     //Tiles[row, column].transform.localScale = new Vector3(3, 3);
                     ins.GetComponent<Cube>().Init(-1, row / 3, column / 3); // might be redundent as this is default
                     Tiles[row / 3, column / 3] = ins;
-                }//row == -1 || row == MAP_WIDTH ||
-                /*
-                if (row == -1 || row == MAP_WIDTH) {
-                    if (column < (float)(MAP_HEIGHT / 3) || column > (float)((2.0f / 3.0f) * MAP_HEIGHT)) {
-                        Instantiate(cubeWall, new Vector3(row, 0.5f, column) - boardOffset, Quaternion.identity);
-                    } else {
-                        Instantiate(waterCube, new Vector3(row, -1f, column) - boardOffset, Quaternion.identity);
-                    }
                 }
-                */
             }
-        }
-    }
-
-    public void SetTileAlliance(int alliance, int x, int y) {
-        if (client) {
-            if (isYourTurn) {
-                client.Send("CSETTILE|" + alliance + "|" + x + "|" + y);
-            }
-        } else {
-            HandleSetTileAlliance(alliance, x, y);
         }
     }
 
@@ -573,6 +539,24 @@ public class Board : MonoBehaviour {
         }
     }
 
+    public string GetTilesAsString() {
+        string res = "";
+
+        for (int i = 0; i < MAP_WIDTH_REAL; i++) {
+            for (int j = 0; j < MAP_HEIGHT_REAL; j++) {
+                if(Tiles[i, j]) {
+                    var cube = Tiles[i, j].GetComponent<Cube>();
+                    if (cube) {
+                        res += cube.Alliance + ",";
+                    }
+                }
+            }
+            res = res.Substring(0, res.Length - 1) + "+";
+        }
+
+        return res.Substring(0, res.Length - 1);
+    }
+
     public void Alert(string text) {
         // TODO: create text to display information
         alertCanvas.GetComponentInChildren<Text>().text = text;
@@ -580,7 +564,6 @@ public class Board : MonoBehaviour {
         lastAlert = Time.time;
         alertActive = true;
     }
-
 
     public void UpdateAlert() {
         if (alertActive) {
@@ -599,12 +582,32 @@ public class Board : MonoBehaviour {
         // Something wrong in this code:
         for (int i = 0; i < Score.Length; i++) {
             if (Score[i] / MaxScore >= WinScoreThreshold) {
-                client.Send("CPLAYERWON|" + i);
+                //client.Send("CPLAYERWON|" + i);
                 return true;
             }
         }
 
         return true;
+    }
+
+    // setup our OnEvent as callback:
+    void OnEnable() {
+        Debug.Log("Board OnEnable triggered");
+        PhotonNetwork.OnEventCall += this.OnEvent;
+    }
+
+    // handle custom events:
+    void OnEvent(byte eventcode, object content, int senderid) {
+        // EndTurn
+
+        Debug.Log("OnEvent Triggered " + eventcode + " , " + content);
+        if (eventcode == 0 && !isYourTurn) {
+            Debug.Log("OnEvent Triggered " + eventcode + " , " + content);
+            HandleSyncTiles((string)content);
+            StartTurn();
+        }
+
+
     }
 
     public void ChatMessage(string msg) {
@@ -630,7 +633,7 @@ public class Board : MonoBehaviour {
         i.text = "";
     }
 
-    public void SyncTiles() {
+    public string SyncTiles() {
         StringBuilder sb = new StringBuilder();
 
         for (int i = 0; i < MAP_WIDTH_REAL; i++) {
@@ -652,8 +655,8 @@ public class Board : MonoBehaviour {
         tiles = tiles.Remove(sb.Length - 1);
 
         sb = new StringBuilder();
-        foreach(var pair in Disks) {
-            if(pair.Value) {
+        foreach (var pair in Disks) {
+            if (pair.Value) {
                 sb.Append(pair.Value.ToString() + '+');
             }
         }
@@ -663,65 +666,31 @@ public class Board : MonoBehaviour {
             disks = disks.Remove(disks.Length - 1);
         }
 
-        if (client) {
-            client.Send("CSYNCTILES|" + (isHost ? 1 : 0) + "|" + tiles + "|" + disks);
-        } else {
-            HandleSyncTiles(isHost ? 1 : 0, tiles, disks);
-        }
+        return disks;
 
     }
 
-    public void HandleSyncTiles(int clientId, string tilesData, string disksData) {
+    public void HandleSyncTiles(string tilesString) {
+        int[,] tiles = new int[MAP_WIDTH_REAL, MAP_HEIGHT_REAL];
 
-
-        // i,j=alliance+
-        Debug.Log("SyncTilesRecieved : " + tilesData + " : " + disksData);
-
-        if (clientId == (isHost ? 1 : 0)) {
-            EndTurn();
-        } else {
-
-            var dots = tilesData.Split('+');
-
-            Score[0] = 0;
-            Score[1] = 0;
-
-            for (int i = 0; i < MAP_WIDTH_REAL; i++) {
-                for (int j = 0; j < MAP_HEIGHT_REAL; j++) {
-                    var cube = Tiles[i, j].GetComponent<Cube>();
-                    if(cube) {
-                        cube.SetAlliance(-1);
-                    }
-                }
+        var rows = tilesString.Split(new char[] { '+' } );
+        for(int i = 0; i < rows.Length; i++) {
+            var array = Array.ConvertAll(rows[i].Split(new char[] { ',' }), s => int.Parse(s)); 
+            for(int j = 0; j < array.Length; j++) {
+                tiles[i, j] = array[j];
             }
+        }
 
-            for (int i = 0; i < dots.Length; i++) {
-                var stam = dots[i].Split(',');
-                int x = int.Parse(stam[0]);
-                int y = int.Parse(stam[1].Split('=')[0]);
-                int alliance = int.Parse(stam[1].Split('=')[1]);
-
-                var cube = Tiles[x, y].GetComponent<Cube>();
-                if(cube) {
-                    cube.SetAlliance(alliance);
-                    Score[alliance]++;
-                }
-            }
-
-            var disks = disksData.Split('+');
-
-            for (int i = 0; i < disks.Length; i++) {
-                var stam = disks[i].Split(',');
-                float x = float.Parse(stam[0]);
-                float z = float.Parse(stam[1].Split('=')[0]);
-                int id = int.Parse(stam[1].Split('=')[1]);
-
-                if (Disks[id] && Disks[id].gameObject) {
-                    Disks[id].gameObject.transform.position = new Vector3(x, 5.0f, z);
+        for (int i = 0; i < MAP_WIDTH_REAL; i++) {
+            for (int j = 0; j < MAP_HEIGHT_REAL; j++) {
+                var cube = Tiles[i, j].GetComponent<Cube>();
+                if (cube) {
+                    cube.SetAlliance(tiles[i, j]);
                 }
             }
         }
     }
+
 
     public void SyncDiscsLocationRecieved(string clientId, string data) {
         // x,z=id+
