@@ -8,7 +8,7 @@ public class Disk : Photon.PunBehaviour {
     private Vector3 originalPosition;
     internal bool startedMoving = false;
     private bool isMouseDown = false;
-    private bool zoomOut = false;   
+    private bool zoomOut = false;
     public Rigidbody Rigidbody;
     public SpringJoint SpringJoint;
     public float releaseTime = 0.15f;
@@ -24,6 +24,8 @@ public class Disk : Photon.PunBehaviour {
 
     public int Attack = 1;
     public int Id = -1;
+    public enum ClassType { Rock, Paper, Scissors };
+    public ClassType classType;
 
     public bool Enable = false; // when disabled, block any mouse interaction with this game object
 
@@ -59,24 +61,24 @@ public class Disk : Photon.PunBehaviour {
     }
 
     private void Update() {
-        if (isMouseDown && Enable) {
+        if (isMouseDown) {
             Rigidbody.position = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             if (line) {
                 line.SetPosition(1, Rigidbody.position);
             }
         }
         if (enlarge) {
-            if (gameObject.transform.localScale.x < 18 && gameObject.transform.localScale.z < 18) {
+            if (gameObject.transform.localScale.x < 13 && gameObject.transform.localScale.z < 13) {
                 gameObject.transform.position += new Vector3(0, 0.05f, 0);
                 gameObject.transform.localScale += new Vector3(0.1f, 0, 0.1f);
-            } else {
+            }
+            else {
                 enlarge = false;
             }
         }
     }
 
     private void OnMouseDown() {
-        Debug.Log("OnMouseDown. Is enabled : " + Enable);
         if (!Enable) {
             return;
         }
@@ -144,10 +146,41 @@ public class Disk : Photon.PunBehaviour {
 
 
     private void OnCollisionEnter(Collision collision) {
-        if (collision.gameObject.name == "WaterCube") {
-            var disk = collision.gameObject.GetComponent<Disk>();
-            if (disk) {
-                Board.Instance.DestroyDisk(disk);
+        var disk = collision.gameObject.GetComponent<Disk>();
+        if (!disk) return;
+        if ((Board.Instance.isYourTurn) && (disk.Alliance != Alliance)) {
+            if (classType == ClassType.Rock) {
+                if (disk.classType == ClassType.Paper) {
+                    disk.DealDamage((int)(Attack * 0.5));
+                }
+                else if (disk.classType == ClassType.Scissors) {
+                    disk.DealDamage((int)(Attack * 2));
+                }
+                else {
+                    disk.DealDamage(Attack);
+                }
+            }
+            else if (classType == ClassType.Paper) {
+                if (disk.classType == ClassType.Paper) {
+                    disk.DealDamage(Attack);
+                }
+                else if (disk.classType == ClassType.Scissors) {
+                    disk.DealDamage((int)(Attack * 0.5));
+                }
+                else {
+                    disk.DealDamage((int)(Attack * 2));
+                }
+            }
+            else {
+                if (disk.classType == ClassType.Scissors) {
+                    disk.DealDamage(Attack);
+                }
+                else if (disk.classType == ClassType.Rock) {
+                    disk.DealDamage((int)(Attack * 0.5));
+                }
+                else {
+                    disk.DealDamage((int)(Attack * 2));
+                }
             }
         }
     }
@@ -155,12 +188,12 @@ public class Disk : Photon.PunBehaviour {
     private void DealDamage(int attack) {
         Health -= attack;
         if (Health < 0) {
-
+            PhotonNetwork.Destroy(photonView);
         }
     }
 
     internal void DestroyDisk() {
-        Destroy(this);
+        PhotonNetwork.Destroy(photonView);
     }
 
 
@@ -177,9 +210,9 @@ public class Disk : Photon.PunBehaviour {
         Debug.Log("Board Sync OnPhotonSerializeView " + stream.isWriting);
         if (stream.isWriting) {
             stream.SendNext(Alliance);
-        } else {
+        }
+        else {
             Alliance = (int)stream.ReceiveNext();
         }
     }
-
 }

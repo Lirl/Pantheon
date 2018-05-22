@@ -108,7 +108,8 @@ public class Board : Photon.PunBehaviour {
         if (PhotonNetwork.connected) {
             isHost = GameManager.Instance.isHost;
             //Alert(client.players[0].name + " versus " + client.players[1].name);
-        } else {
+        }
+        else {
             isHost = true;
         }
 
@@ -148,7 +149,8 @@ public class Board : Photon.PunBehaviour {
 
         if (alliance == (isHost ? 1 : 0)) {
             WinMessage.SetActive(true);
-        } else {
+        }
+        else {
             LoseMessage.SetActive(true);
         }
         BackToMenu.SetActive(true);
@@ -169,7 +171,8 @@ public class Board : Photon.PunBehaviour {
         if (Math.Abs(thresh.x + thresh.z) < 1) {
             //Debug.Log("Disks stopped moving ! thresh " + (thresh.x + thresh.z));
             OnDisksIdle();
-        } else {
+        }
+        else {
             prevDiskIdleResult = pos;
             //Debug.Log("OnDisksIdleTrigger Invoke Started " + (thresh.x + thresh.z));
             Invoke("OnDisksIdleTrigger", 1);
@@ -187,7 +190,8 @@ public class Board : Photon.PunBehaviour {
         Debug.Log("CheckWinner");
         if (Score[0] >= Score[1]) {
             HandleShowWinner(0);
-        } else {
+        }
+        else {
             HandleShowWinner(1);
         }
 
@@ -203,7 +207,7 @@ public class Board : Photon.PunBehaviour {
         if (gameIsOver) {
             return;
         }
-        
+
         isYourTurn = true;
         TurnHasEnded = false;
 
@@ -289,7 +293,8 @@ public class Board : Photon.PunBehaviour {
         if (isZoomedIn) {
             if (Camera.main.orthographicSize >= 45) {
                 Camera.main.orthographicSize -= 0.5f;
-            } else {
+            }
+            else {
                 isZoomedIn = false;
             }
         }
@@ -297,7 +302,8 @@ public class Board : Photon.PunBehaviour {
         if (isZoomedOut) {
             if (Camera.main.orthographicSize <= 75) {
                 Camera.main.orthographicSize += 0.5f;
-            } else {
+            }
+            else {
                 isZoomedOut = false;
             }
         }
@@ -361,20 +367,15 @@ public class Board : Photon.PunBehaviour {
         GameObject hook;
         if (alliance == 1) {
             hook = GameObject.Find("HostHook");
-        } else {
+        }
+        else {
             hook = GameObject.Find("ClientHook");
         }
 
         Debug.Log("Attempting to load prefab " + "Characters/Character" + code + " for alliance " + alliance + " isYourTurn " + isYourTurn);
         var prefab = Resources.Load("Characters/Character" + code) as GameObject;
         var offset = (code == 3 ? 7f : 3f);
-        GameObject ins;
-        if (PhotonNetwork.connected) {
-            ins = PhotonNetwork.Instantiate("Characters/Character" + code, hook.transform.position + new Vector3(0, 3f, 0), Quaternion.identity, 0);
-        } else {
-            ins = Instantiate(prefab, hook.transform.position + new Vector3(0, 3f, 0), Quaternion.identity);
-        }
-        
+        var ins = PhotonNetwork.Instantiate("Characters/Character" + code, hook.transform.position + new Vector3(0, 3f, 0), Quaternion.identity, 0);
 
         ins.GetComponent<SpringJoint>().connectedBody = hook.GetComponent<Rigidbody>();
         ins.GetComponent<Disk>().Init(alliance, isYourTurn);
@@ -392,7 +393,8 @@ public class Board : Photon.PunBehaviour {
         GameObject hook;
         if (alliance == 1) {
             hook = GameObject.Find("HostHook");
-        } else {
+        }
+        else {
             hook = GameObject.Find("ClientHook");
         }
 
@@ -433,7 +435,8 @@ public class Board : Photon.PunBehaviour {
         if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit, 50.0f, LayerMask.GetMask("Board"))) {
             mouseOver.x = (int)(hit.point.x + boardOffset.x);
             mouseOver.y = (int)((hit.point.z + -1 * boardOffset.z) * -1);
-        } else {
+        }
+        else {
             mouseOver.x = -1;
             mouseOver.y = -1;
         }
@@ -530,7 +533,8 @@ public class Board : Photon.PunBehaviour {
                 if (cube.Alliance != -1) {
                     Score[cube.Alliance]--;
                     Score[alliance]++;
-                } else {
+                }
+                else {
 
                     Score[alliance]++;
                 }
@@ -544,7 +548,7 @@ public class Board : Photon.PunBehaviour {
 
         for (int i = 0; i < MAP_WIDTH_REAL; i++) {
             for (int j = 0; j < MAP_HEIGHT_REAL; j++) {
-                if(Tiles[i, j]) {
+                if (Tiles[i, j]) {
                     var cube = Tiles[i, j].GetComponent<Cube>();
                     if (cube) {
                         res += cube.Alliance + ",";
@@ -645,7 +649,8 @@ public class Board : Photon.PunBehaviour {
                             sb.Append(cube.ToString() + '+');
                         }
                     }
-                } catch (Exception e) {
+                }
+                catch (Exception e) {
                     Debug.Log("SyncTiles: (" + i + "," + j + ") " + e.Message);
                 }
             }
@@ -673,10 +678,10 @@ public class Board : Photon.PunBehaviour {
     public void HandleSyncTiles(string tilesString) {
         int[,] tiles = new int[MAP_WIDTH_REAL, MAP_HEIGHT_REAL];
 
-        var rows = tilesString.Split(new char[] { '+' } );
-        for(int i = 0; i < rows.Length; i++) {
-            var array = Array.ConvertAll(rows[i].Split(new char[] { ',' }), s => int.Parse(s)); 
-            for(int j = 0; j < array.Length; j++) {
+        var rows = tilesString.Split(new char[] { '+' });
+        for (int i = 0; i < rows.Length; i++) {
+            var array = Array.ConvertAll(rows[i].Split(new char[] { ',' }), s => int.Parse(s));
+            for (int j = 0; j < array.Length; j++) {
                 tiles[i, j] = array[j];
             }
         }

@@ -46,6 +46,7 @@ public class GameManager : Photon.PunBehaviour {
     /// </summary>
     string _gameVersion = "1";
     bool _initialized = false;
+    private User user;
 
     #endregion
 
@@ -69,6 +70,7 @@ public class GameManager : Photon.PunBehaviour {
             return;
         }
         _initialized = true;
+        user = GameObject.FindObjectOfType<User>();
 
         // GameManager object setup
         Instance = this;
@@ -220,6 +222,6 @@ public class GameManager : Photon.PunBehaviour {
 
 
     public void SaveProgress() {
-        //user.Save();
+        user.Save();
     }
 }

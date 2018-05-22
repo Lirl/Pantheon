@@ -16,7 +16,7 @@ public class PlayerStats : MonoBehaviour {
     public TextMeshProUGUI Name;
 
     // Use this for initialization
-    void Start () {
+    void Start() {
         var player = FindObjectOfType<User>();
         wins = player.wins;
         games = player.wins + player.losses;
@@ -25,10 +25,10 @@ public class PlayerStats : MonoBehaviour {
         Wins.text = "Wins: " + wins.ToString();
         Gold.text = "Gold: " + gold.ToString();
         Name.text = player.userName;
-	}
-	
-	// Update is called once per frame
-	void Update () {
-		
-	}
+    }
+
+    // Update is called once per frame
+    void Update() {
+
+    }
 }
