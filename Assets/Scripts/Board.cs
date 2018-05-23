@@ -61,8 +61,12 @@ public class Board : Photon.PunBehaviour {
         Disks.Add(id, disk);
     }
 
-    internal void OnDiskReleased(Disk disk, Vector3 pos) {
-        ReleaseDisk(disk.Alliance, pos.x, pos.z);
+    internal void OnDiskReleased(Disk disk) {
+        if (disk.Alliance == (isHost ? 1 : 0)) {
+            // This is the player that played the move
+            // He should end the turn
+            Invoke("OnDisksIdleTrigger", 1);
+        }
     }
 
     public bool isYourTurn;
@@ -78,7 +82,6 @@ public class Board : Photon.PunBehaviour {
     public Text MessageBox;
 
     public List<CardInformation> CardTypes = new List<CardInformation>();
-    public GameObject[] CurrentCharacter = new GameObject[2];
 
     private Client client;
     private Vector3 prevDiskIdleResult = new Vector3(-1, -1, -1);
@@ -216,7 +219,7 @@ public class Board : Photon.PunBehaviour {
 
         Alert("Player " + (isHost ? 1 : 2) + " turn #" + TurnCounter);
         // Add a new card to player hand (current turn)
-        DrawCard();
+        DrawCard(); 
 
         // 10 seconds turn
         //Invoke("EndTurn", 10);
@@ -312,27 +315,6 @@ public class Board : Photon.PunBehaviour {
         UpdateMouseOver();
     }
 
-    internal void ReleaseDisk(int alliance, float x, float y) {
-        // If the disk is yours, you already got that effect
-
-        // Alliance is of the opposing player
-        // therefore we should play his move by moving his piece to according to his mouse position
-        // and releasing 
-        GameObject disk = CurrentCharacter[alliance];
-        if (!disk) {
-            Debug.LogError("Release disk: Could not release disk of player " + alliance + " since its undefined");
-        }
-
-        // Actually releasing the disk
-        disk.GetComponent<Disk>().SetPositionAndRelease(new Vector3(x, 0.1f, y));
-
-        if (alliance == (isHost ? 1 : 0)) {
-            // This is the player that played the move
-            // He should end the turn
-            //Invoke("EndTurn", 2);
-            Invoke("OnDisksIdleTrigger", 1);
-        }
-    }
     internal void CreatePowerUp() {
         return;
         int x = UnityEngine.Random.Range(1, MAP_WIDTH_REAL - 1);
@@ -379,7 +361,6 @@ public class Board : Photon.PunBehaviour {
 
         ins.GetComponent<SpringJoint>().connectedBody = hook.GetComponent<Rigidbody>();
         ins.GetComponent<Disk>().Init(alliance, isYourTurn);
-        CurrentCharacter[alliance] = ins;
 
         // Handle UI
         if (Hand) {
@@ -393,16 +374,12 @@ public class Board : Photon.PunBehaviour {
         GameObject hook;
         if (alliance == 1) {
             hook = GameObject.Find("HostHook");
-        }
-        else {
+        } else {
             hook = GameObject.Find("ClientHook");
         }
 
         var ins = PhotonNetwork.Instantiate(DummyDisk.name, hook.transform.position, Quaternion.identity, 0);
-        ins.GetComponent<SpringJoint>().connectedAnchor = hook.transform.position;
-        ins.GetComponent<SpringJoint>().connectedBody = hook.GetComponent<Rigidbody>();
         ins.GetComponent<Disk>().Init(alliance);
-        CurrentCharacter[alliance] = ins;
 
         // Handle UI
         if (Hand) {
@@ -523,6 +500,13 @@ public class Board : Photon.PunBehaviour {
     }
 
     public void HandleSetTileAlliance(int alliance, int x, int y) {
+        PhotonView photonView = PhotonView.Get(this);
+        photonView.RPC("PunHandleSetTileAlliance", PhotonTargets.All, alliance, x, y);
+    }
+
+    [PunRPC]
+    public void PunHandleSetTileAlliance(int alliance, int x, int y) {
+        Debug.Log("PunHandleSetTileAlliance : " + alliance + "," + x + "," + y);
         if (x == -1 || y == -1) {
             return;
         }
@@ -535,11 +519,13 @@ public class Board : Photon.PunBehaviour {
                     Score[alliance]++;
                 }
                 else {
-
                     Score[alliance]++;
                 }
+                Debug.Log("cube.SetAlliance called");
                 cube.SetAlliance(alliance);
             }
+        } else {
+            Debug.LogWarning("Attempting to set cube " + x + ", " + y + " but Tiles[x,y] is null");
         }
     }
 

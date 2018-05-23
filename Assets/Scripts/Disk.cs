@@ -20,7 +20,7 @@ public class Disk : Photon.PunBehaviour {
     public MeshRenderer mesh;
 
     public int Alliance;
-    public int Health = -1;
+    public double Health = -1;
 
     public int Attack = 1;
     public int Id = -1;
@@ -31,6 +31,7 @@ public class Disk : Photon.PunBehaviour {
 
     private static int _idCounter = 0;
     private bool enlarge = false;
+    private bool _released = false;
 
     public static int GenerateId() {
         _idCounter++;
@@ -44,6 +45,27 @@ public class Disk : Photon.PunBehaviour {
     }
 
     public void Init(int alliance) {
+        PhotonView photonView = PhotonView.Get(this);
+        photonView.RPC("PunInit", PhotonTargets.All, alliance);
+    }
+
+    [PunRPC]
+    public void PunInit(int alliance) {
+        GameObject hook;
+        if (alliance == 1) {
+            hook = GameObject.Find("HostHook");
+        } else {
+            hook = GameObject.Find("ClientHook");
+        }
+
+        GetComponent<SpringJoint>().connectedAnchor = hook.transform.position;
+        GetComponent<SpringJoint>().connectedBody = hook.GetComponent<Rigidbody>();
+
+        if(!Board.Instance.isYourTurn) {
+            Destroy(GetComponent<SpringJoint>());
+        }
+
+        Debug.Log("PunInit : " + alliance);
         Alliance = alliance;
         mesh = SJ.connectedBody.GetComponent<MeshRenderer>();
         line.SetPosition(0, SJ.connectedBody.position);
@@ -67,6 +89,11 @@ public class Disk : Photon.PunBehaviour {
                 line.SetPosition(1, Rigidbody.position);
             }
         }
+
+        if (_released) {
+            transform.position = new Vector3(transform.position.x, 0.1f, transform.position.z);
+        }
+
         if (enlarge) {
             if (gameObject.transform.localScale.x < 13 && gameObject.transform.localScale.z < 13) {
                 gameObject.transform.position += new Vector3(0, 0.05f, 0);
@@ -82,6 +109,10 @@ public class Disk : Photon.PunBehaviour {
         if (!Enable) {
             return;
         }
+
+        _released = false;
+
+        GetComponent<PhotonTransformView>();
 
         originalPosition = transform.position;
 
@@ -105,41 +136,42 @@ public class Disk : Photon.PunBehaviour {
         isMouseDown = false;
         var pos = transform.position;
         transform.position = originalPosition;
-        Board.Instance.OnDiskReleased(this, pos);
-        //Release();
+
+        PhotonView photonView = PhotonView.Get(this);
+        photonView.RPC("Release", PhotonTargets.All, pos);
+
+        //Release(pos);
     }
 
-    public void Release() {
-        Debug.Log(gameObject.tag);
-        if (gameObject.tag == ("Character3")) {
-            Debug.Log("Increasing y");
-            gameObject.transform.position += new Vector3(0, 1f, 0);
-        }
+    [PunRPC]
+    public void Release(Vector3 pos, PhotonMessageInfo info) {
+        Debug.Log("Release fired for player " + (Board.Instance.isHost ? 1 : 0) + " pos: " + transform.position.x + "," + transform.position.y + "," + transform.position.z);
+
+        _released = true;
+
         isMouseDown = false;
         Rigidbody.isKinematic = false;
         if (line) {
             Destroy(line);
         }
-        StartCoroutine(UnHook());
-    }
 
-    public void SetPositionAndRelease(Vector3 position) {
-        Debug.Log("SetPositionAndRelease : " + position);
-        transform.position = position;
-        Release();
+        transform.position = pos;
+        StartCoroutine(UnHook());
+
+        Board.Instance.OnDiskReleased(this);
         Invoke("StopMoving", 5);
-        Debug.Log("StopMoving started" + position);
     }
 
     public void StopMoving() {
-        Debug.Log("Stop Moving");
         Rigidbody.velocity = Vector3.zero;
     }
 
     IEnumerator UnHook() {
         mesh.enabled = false;
         yield return new WaitForSeconds(releaseTime);
-        Destroy(GetComponent<SpringJoint>());
+        if (GetComponent<SpringJoint>()) {
+            Destroy(GetComponent<SpringJoint>());
+        }
         startedMoving = true;
         yield return new WaitForSeconds(endTurn);
     }
@@ -147,7 +179,7 @@ public class Disk : Photon.PunBehaviour {
 
     private void OnCollisionEnter(Collision collision) {
         var disk = collision.gameObject.GetComponent<Disk>();
-        if (!disk) return;
+        if (!Board.Instance.isYourTurn || !disk || disk.Alliance == (Board.Instance.isHost ? 1 : 0)) return;
         if ((Board.Instance.isYourTurn) && (disk.Alliance != Alliance)) {
             if (classType == ClassType.Rock) {
                 if (disk.classType == ClassType.Paper) {
@@ -165,10 +197,10 @@ public class Disk : Photon.PunBehaviour {
                     disk.DealDamage(Attack);
                 }
                 else if (disk.classType == ClassType.Scissors) {
-                    disk.DealDamage((int)(Attack * 0.5));
+                    disk.DealDamage((double)(Attack * 0.5));
                 }
                 else {
-                    disk.DealDamage((int)(Attack * 2));
+                    disk.DealDamage((double)(Attack * 2));
                 }
             }
             else {
@@ -176,17 +208,17 @@ public class Disk : Photon.PunBehaviour {
                     disk.DealDamage(Attack);
                 }
                 else if (disk.classType == ClassType.Rock) {
-                    disk.DealDamage((int)(Attack * 0.5));
+                    disk.DealDamage((double)(Attack * 0.5));
                 }
                 else {
-                    disk.DealDamage((int)(Attack * 2));
+                    disk.DealDamage((double)(Attack * 2));
                 }
             }
         }
     }
 
-    private void DealDamage(int attack) {
-        Health -= attack;
+    private void DealDamage(double dmg) {
+        Health = Health - dmg;
         if (Health < 0) {
             PhotonNetwork.Destroy(photonView);
         }

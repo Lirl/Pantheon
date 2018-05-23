@@ -52,10 +52,9 @@ public class Cube : MonoBehaviour {
 
 
     private void OnTriggerEnter(Collider other) {
-
         // check if this is not your turn.
         // collider is handled only in the player who has the turn
-        if(!Board.Instance.isHost) {
+        if(!Board.Instance.isYourTurn) {
             return;
         }
 

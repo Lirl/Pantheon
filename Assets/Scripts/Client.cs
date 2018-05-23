@@ -88,7 +88,7 @@ public class Client : MonoBehaviour
                 UserConnected(aData[1], false);
                 break;
             case "SRELEASEDISK":
-                Board.Instance.ReleaseDisk(int.Parse(aData[1]), float.Parse(aData[2]), float.Parse(aData[3]));
+                //Board.Instance.ReleaseDisk(int.Parse(aData[1]), float.Parse(aData[2]), float.Parse(aData[3]));
                 break;
             case "SCREATEDISK":
                 // Create a disk for aData[1] player
