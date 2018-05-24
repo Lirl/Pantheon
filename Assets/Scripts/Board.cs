@@ -75,6 +75,8 @@ public class Board : Photon.PunBehaviour {
 
     private Disk currentlyReleasedDisk;
     private bool _diskIdleTriggered;
+    private Color yourColor;
+    private Color opponentColor;
 
     private void Start() {
         Instance = this;
@@ -109,8 +111,10 @@ public class Board : Photon.PunBehaviour {
         Alert(isHost ? "I am Host" : "I am Client");
 
         yourScore.GetComponentInChildren<Text>().color = isHost ? Color.blue : Color.red;
+        yourColor = yourScore.GetComponentInChildren<Text>().color;
         yourScore.GetComponentInChildren<Text>().text = "0";
         opponentScore.GetComponentInChildren<Text>().color = isHost ? Color.red : Color.blue;
+        opponentColor = opponentScore.GetComponentInChildren<Text>().color;
         opponentScore.GetComponentInChildren<Text>().text = "0";
 
         // Client player has its camera rotate 180 degrees
@@ -461,6 +465,16 @@ public class Board : Photon.PunBehaviour {
         }
     }
 
+    public int LeadingPlayer() {
+        if (Score[0] > Score[1]) {
+            return 0;
+        } else if (Score[0] < Score[1]) {
+            return 1;
+        } else {
+            return -1;
+        }
+    }
+
     public void CheckWinner() {
         Debug.Log("CheckWinner");
         if (Score[0] >= Score[1]) {
@@ -501,7 +515,18 @@ public class Board : Photon.PunBehaviour {
             yourScore.GetComponentInChildren<Text>().text = Score[isHost ? 1 : 0].ToString();
             opponentScore.GetComponentInChildren<Text>().text = Score[isHost ? 0 : 1].ToString();
         }
-        
+
+        var _prevLead = LeadingPlayer();
+        if (_prevLead > -1) {
+            if (_prevLead == (isHost || isTutorial ? 1 : 0)) {
+                yourScore.GetComponentInChildren<Text>().color = Color.Lerp(Color.white, yourColor, Mathf.PingPong(Time.time, 1));
+                opponentScore.GetComponentInChildren<Text>().color = opponentColor;
+            } else {
+                opponentScore.GetComponentInChildren<Text>().color = Color.Lerp(Color.white, opponentColor, Mathf.PingPong(Time.time, 1));
+                yourScore.GetComponentInChildren<Text>().color = yourColor;
+            }
+        }
+
 
         if (isZoomedIn) {
             if (Camera.main.orthographicSize >= 45) {
