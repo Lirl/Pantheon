@@ -135,8 +135,6 @@ public class Board : Photon.PunBehaviour {
         }
     }
 
-
-
     #region Disk Management
 
     public void CreateSelectedDisk() {
@@ -289,7 +287,6 @@ public class Board : Photon.PunBehaviour {
     }
 
     #endregion
-
 
     #region AI
 
@@ -581,8 +578,11 @@ public class Board : Photon.PunBehaviour {
         // Create deck list
         Deck = new List<int>();
         for (int i = 0; i < 30; i++) {
-            // Set deck currently with values from 0 to 1
-            Deck.Add(0); // UnityEngine.Random.Range(0, 4));
+            if (User.instance != null) {
+                Deck.Add(User.instance.deck[UnityEngine.Random.Range(0, User.instance.deck.Count)]); // UnityEngine.Random.Range(0, 4));
+            } else {
+                Deck.Add(UnityEngine.Random.Range(0, 3));
+            }
         }
 
         for (int i = 0; i < 2; i++) {

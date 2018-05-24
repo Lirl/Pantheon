@@ -14,6 +14,7 @@ public class Disk : Photon.PunBehaviour {
     public float releaseTime = 0.15f;
     public float cameraAdjuster;
     public float endTurn;
+    public Slider HealthBar;
 
     LineRenderer line;
     public SpringJoint SJ;
@@ -21,6 +22,7 @@ public class Disk : Photon.PunBehaviour {
 
     public int Alliance;
     public double Health = -1;
+    public double TotalHealth = -1;
 
     public int Attack = 1;
     public int Id = -1;
@@ -32,6 +34,8 @@ public class Disk : Photon.PunBehaviour {
     private static int _idCounter = 0;
     private bool enlarge = false;
     private bool _released = false;
+    private bool inField = false;
+    private bool outOfBounds = false;
 
     public static int GenerateId() {
         _idCounter++;
@@ -65,22 +69,26 @@ public class Disk : Photon.PunBehaviour {
         GetComponent<SpringJoint>().connectedAnchor = hook.transform.position;
         GetComponent<SpringJoint>().connectedBody = hook.GetComponent<Rigidbody>();
 
-        if(!Board.Instance.isYourTurn) {
+        if (!Board.Instance.isYourTurn) {
             Destroy(GetComponent<SpringJoint>());
         }
 
         Alliance = alliance;
+
+        // Set disk color
+        GetComponent<MeshRenderer>().material = Resources.Load("Materials/Color" + alliance, typeof(Material)) as Material;
+
         mesh = SJ.connectedBody.GetComponent<MeshRenderer>();
         line.SetPosition(0, SJ.connectedBody.position);
         if (Health == -1) {
-            Health = 1;
+            Health = 3;
+            TotalHealth = Health;
+            HealthBar.value = (float)Health;
         }
         Id = GenerateId();
 
         Board.Instance.SaveDisk(Id, this);
     }
-
-
 
     public void Init(int alliance, bool enable) {
         Enable = enable;
@@ -103,10 +111,25 @@ public class Disk : Photon.PunBehaviour {
             if (gameObject.transform.localScale.x < 13 && gameObject.transform.localScale.z < 13) {
                 gameObject.transform.position += new Vector3(0, 0.05f, 0);
                 gameObject.transform.localScale += new Vector3(0.1f, 0, 0.1f);
-            }
-            else {
+            } else {
                 enlarge = false;
             }
+        }
+
+        if (inField && !outOfBounds) {
+            CheckIfOutOfBounds();
+        }
+        if (outOfBounds && gameObject.transform.localScale.x > 0.1) {
+            gameObject.transform.localScale -= new Vector3(0.05f, 0, 0.05f);
+        }
+        if (gameObject.transform.localScale.x < 0.1 && Board.Instance.isYourTurn) {
+            PhotonNetwork.Destroy(gameObject);
+        }
+    }
+
+    private void CheckIfOutOfBounds() {
+        if (Math.Abs(gameObject.transform.position.x) > 32 || Math.Abs(gameObject.transform.position.z) > 47) {
+            outOfBounds = true;
         }
     }
 
@@ -140,7 +163,7 @@ public class Disk : Photon.PunBehaviour {
         var pos = transform.position;
         transform.position = originalPosition;
 
-        if(PhotonNetwork.connected) {
+        if (PhotonNetwork.connected) {
             PhotonView photonView = PhotonView.Get(this);
             photonView.RPC("Release", PhotonTargets.All, pos);
         } else {
@@ -168,18 +191,23 @@ public class Disk : Photon.PunBehaviour {
     }
 
     public void StopMoving() {
-        Debug.Log("StopMoving called");
         Rigidbody.velocity = Vector3.zero;
     }
 
     IEnumerator UnHook() {
         mesh.enabled = false;
         yield return new WaitForSeconds(releaseTime);
+        Invoke("SetInField", 1f);
         if (GetComponent<SpringJoint>()) {
             Destroy(GetComponent<SpringJoint>());
         }
         startedMoving = true;
         yield return new WaitForSeconds(endTurn);
+    }
+
+    public void SetInField() {
+        Debug.Log("Disk is in the field");
+        inField = true;
     }
 
 
@@ -190,33 +218,25 @@ public class Disk : Photon.PunBehaviour {
             if (classType == ClassType.Rock) {
                 if (disk.classType == ClassType.Paper) {
                     disk.DealDamage((int)(Attack * 0.5));
-                }
-                else if (disk.classType == ClassType.Scissors) {
+                } else if (disk.classType == ClassType.Scissors) {
                     disk.DealDamage((int)(Attack * 2));
-                }
-                else {
+                } else {
                     disk.DealDamage(Attack);
                 }
-            }
-            else if (classType == ClassType.Paper) {
+            } else if (classType == ClassType.Paper) {
                 if (disk.classType == ClassType.Paper) {
                     disk.DealDamage(Attack);
-                }
-                else if (disk.classType == ClassType.Scissors) {
+                } else if (disk.classType == ClassType.Scissors) {
                     disk.DealDamage((double)(Attack * 0.5));
-                }
-                else {
+                } else {
                     disk.DealDamage((double)(Attack * 2));
                 }
-            }
-            else {
+            } else {
                 if (disk.classType == ClassType.Scissors) {
                     disk.DealDamage(Attack);
-                }
-                else if (disk.classType == ClassType.Rock) {
+                } else if (disk.classType == ClassType.Rock) {
                     disk.DealDamage((double)(Attack * 0.5));
-                }
-                else {
+                } else {
                     disk.DealDamage((double)(Attack * 2));
                 }
             }
@@ -224,8 +244,7 @@ public class Disk : Photon.PunBehaviour {
     }
 
     public void ForceSyncPosition() {
-        if(Board.Instance.isYourTurn) {
-            Debug.Log("ForceSyncPosition called");
+        if (Board.Instance.isYourTurn) {
             if (PhotonNetwork.connected) {
                 PhotonView photonView = PhotonView.Get(this);
                 photonView.RPC("PunForceSyncPosition", PhotonTargets.All, transform.position);
@@ -238,21 +257,28 @@ public class Disk : Photon.PunBehaviour {
         transform.position = pos;
     }
 
-
     private void DealDamage(double dmg) {
-
+        if (Board.Instance.isYourTurn) {
+            if (PhotonNetwork.connected) {
+                PhotonView photonView = PhotonView.Get(this);
+                photonView.RPC("PunForceSyncPosition", PhotonTargets.All, dmg);
+            }
+        }
     }
 
-    [PunRPC]
-    private void PunDealDamage(double dmg, PhotonMessageInfo info) {
-        /*Health = Health - dmg;
-        if (Health < 0) {
+    private void PunDealDamage(double dmg) {
+
+        Health = Health - dmg;
+        HealthBar.value = (float)Health;
+        //health.SetBar((float)Health, (float)TotalHealth);
+
+        if (Health < 0 && Board.Instance.isYourTurn) {
             PhotonNetwork.Destroy(photonView);
-        }*/
+        }
     }
 
     internal void DestroyDisk() {
-        if(PhotonNetwork.connected) {
+        if (PhotonNetwork.connected) {
             PhotonNetwork.Destroy(photonView);
         } else {
             // TODO: have a death effect
@@ -274,8 +300,7 @@ public class Disk : Photon.PunBehaviour {
         Debug.Log("Board Sync OnPhotonSerializeView " + stream.isWriting);
         if (stream.isWriting) {
             stream.SendNext(Alliance);
-        }
-        else {
+        } else {
             Alliance = (int)stream.ReceiveNext();
         }
     }
@@ -283,4 +308,5 @@ public class Disk : Photon.PunBehaviour {
     void OnDestroy() {
         Debug.Log("Disk " + Id + " destroyed");
     }
+
 }
