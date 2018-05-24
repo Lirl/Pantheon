@@ -34,11 +34,11 @@ public class BoardSync : Photon.PunBehaviour {
         Debug.Log("Board Sync OnPhotonSerializeView " + stream.isWriting);
         if (stream.isWriting) {
             stream.SendNext(_board.GetTilesAsString());
-            stream.SendNext(_board.Score); 
+            //stream.SendNext(_board.Score); 
         } else {
 
             _board.HandleSyncTiles((string)stream.ReceiveNext());
-            _board.Score = ((int[])stream.ReceiveNext());
+            //_board.Score = ((int[])stream.ReceiveNext());
             
         }
     }

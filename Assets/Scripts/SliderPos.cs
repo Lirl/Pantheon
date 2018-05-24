@@ -16,7 +16,7 @@ public class SliderPos : MonoBehaviour {
     // Update is called once per frame
     void Update() {
         if (character) {
-            if (!Board.Instance.isHost) {
+            if (!Board.Instance.isHost && !Board.Instance.isTutorial) {
                 transform.position = new Vector3(character.transform.position.x, character.transform.position.y, character.transform.position.z - 5);
             } else {
                 transform.position = new Vector3(character.transform.position.x, character.transform.position.y, character.transform.position.z + 5f);

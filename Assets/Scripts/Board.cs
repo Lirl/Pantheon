@@ -125,13 +125,18 @@ public class Board : Photon.PunBehaviour {
             Hand.SetActive(false);
         }
 
-        if(isTutorial) {
+        for (int i = 0; i < 2; i++) {
+            DrawCard();
+        }
+
+        Invoke("CheckWinner", gameTime);
+
+        if (isTutorial) {
             StartTurnTutorial();
         } else if (isHost) {
             // Host starts
             StartTurn();
-            Invoke("CreatePowerUp", 1f);
-            Invoke("CheckWinner", gameTime);
+            Invoke("CreatePowerUp", 20f);
         }
     }
 
@@ -236,8 +241,6 @@ public class Board : Photon.PunBehaviour {
         } catch(Exception e) {
             Debug.Log("Exception : " + e.Message);
         }
-
-        Debug.Log(pos);
 
         var thresh = pos - prevDiskIdleResult;
 
@@ -357,6 +360,10 @@ public class Board : Photon.PunBehaviour {
     #region Tutorial Functions
 
     public void StartTurnTutorial() {
+        if (gameIsOver) {
+            return;
+        }
+
         // Human Player
         if (isHost) {
             isYourTurn = true;
@@ -389,6 +396,7 @@ public class Board : Photon.PunBehaviour {
         }
 
         isHost = !isHost;
+        TurnCounter++;
         StartTurnTutorial();
     }
 
@@ -438,13 +446,6 @@ public class Board : Photon.PunBehaviour {
         Debug.Log("EndTurn " + (isYourTurn ? "your turn" : "not your turn"));
         if (isYourTurn && !TurnHasEnded) {
             TurnHasEnded = true;
-
-            // That's all you need to do for switching the turn
-            // BoardSync will sync that data, and trigger SetTurn on the other player.
-            // By doing so, the other player will trigger StartTurn, that will continue game loop as normal
-            TurnCounter++;
-            // We shouldnt sync tiles if we are not connected
-
             isYourTurn = false;
 
             if (Hand) {
@@ -493,8 +494,14 @@ public class Board : Photon.PunBehaviour {
             TimeMessage.GetComponentInChildren<Text>().text = Math.Floor(gameTime).ToString();
         }
 
-        yourScore.GetComponentInChildren<Text>().text = Score[isHost ? 1 : 0].ToString();
-        opponentScore.GetComponentInChildren<Text>().text = Score[isHost ? 0 : 1].ToString();
+        if (isTutorial) {
+            yourScore.GetComponentInChildren<Text>().text = Score[1].ToString();
+            opponentScore.GetComponentInChildren<Text>().text = Score[0].ToString();
+        } else {
+            yourScore.GetComponentInChildren<Text>().text = Score[isHost ? 1 : 0].ToString();
+            opponentScore.GetComponentInChildren<Text>().text = Score[isHost ? 0 : 1].ToString();
+        }
+        
 
         if (isZoomedIn) {
             if (Camera.main.orthographicSize >= 45) {
@@ -525,7 +532,7 @@ public class Board : Photon.PunBehaviour {
         int code = UnityEngine.Random.Range(0, powerUpsAmount);
 
         if (PhotonNetwork.connected) {
-            photonView.RPC("HandleCreatePowerUp", PhotonTargets.All, code, x, y);
+            photonView.RPC("PunHandleCreatePowerUp", PhotonTargets.All, code, x, y);
         } else {
             PunHandleCreatePowerUp(code, x, y);
         }
@@ -547,7 +554,7 @@ public class Board : Photon.PunBehaviour {
             runeScript.yTile = y;
 
             if (isHost) {
-                Invoke("CreatePowerUp", 10f);
+                Invoke("CreatePowerUp", 20f);
             }
 
             //Instantiate(powerUp[UnityEngine.Random.Range(0, powerUp.Length)], location + new Vector3(0, 1.4f,0), Quaternion.identity);
@@ -557,6 +564,10 @@ public class Board : Photon.PunBehaviour {
     }
 
     #endregion
+
+    public int CurrentTurnAlliance() {
+        return TurnCounter % 2;
+    }
 
     private void UpdateMouseOver() {
         if (!Camera.main) {
@@ -583,10 +594,6 @@ public class Board : Photon.PunBehaviour {
             } else {
                 Deck.Add(UnityEngine.Random.Range(0, 3));
             }
-        }
-
-        for (int i = 0; i < 2; i++) {
-            DrawCard();
         }
 
         // Reset score
@@ -621,6 +628,10 @@ public class Board : Photon.PunBehaviour {
     }
 
     public void HandleSetTileAlliance(int alliance, int x, int y) {
+        if (gameIsOver) {
+            return;
+        }
+
         if (PhotonNetwork.connected) {
             PhotonView photonView = PhotonView.Get(this);
             photonView.RPC("PunHandleSetTileAlliance", PhotonTargets.All, alliance, x, y);
@@ -699,8 +710,7 @@ public class Board : Photon.PunBehaviour {
 
     // handle custom events:
     void OnEvent(byte eventcode, object content, int senderid) {
-        // EndTurn
-
+        TurnCounter++;
         Debug.Log("OnEvent Triggered " + eventcode + " , " + content);
         if (eventcode == 0 && !isYourTurn) {
             Debug.Log("OnEvent Triggered " + eventcode + " , " + content);
@@ -789,7 +799,7 @@ public class Board : Photon.PunBehaviour {
             // This is the player that played the move
             // He should end the turn
             _diskIdleTriggered = false;
-            Invoke("OnDisksIdle", 3);
+            //Invoke("OnDisksIdle", 3); causes issues when handling disk damage, since it can cause a quick shift of turn before any collision
             OnDisksIdleTrigger();
         }
     }
@@ -797,27 +807,6 @@ public class Board : Photon.PunBehaviour {
     internal void OnDiskClick(Disk disk) {
         isZoomedIn = false;
         isZoomedOut = true;
-    }
-
-    public void SyncDiscsLocationRecieved(string clientId, string data) {
-        // x,z=id+
-        var dots = data.Split('+');
-
-        Score[0] = 0;
-        Score[1] = 0;
-
-        for (int i = 0; i < dots.Length; i++) {
-            var stam = dots[i].Split(',');
-            float x = float.Parse(stam[0]);
-            float z = float.Parse(stam[1].Split('=')[0]);
-            int id = int.Parse(stam[1].Split('=')[1]);
-
-            // Set position
-            var disk = Disks[id];
-            if (disk) {
-                disk.transform.position = new Vector3(x, transform.position.y, z);
-            }
-        }
     }
 
     public int Clamp(int value, int min, int max) {

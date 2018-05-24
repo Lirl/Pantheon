@@ -73,7 +73,7 @@ public class Disk : Photon.PunBehaviour {
             Destroy(GetComponent<SpringJoint>());
         }
 
-        if(!Board.Instance.isHost) {
+        if(!Board.Instance.isHost && !Board.Instance.isTutorial) {
             transform.rotation = Quaternion.Euler(0, 180, 0);
         }
         
@@ -216,11 +216,27 @@ public class Disk : Photon.PunBehaviour {
 
 
     private void OnCollisionEnter(Collision collision) {
+
         var disk = collision.gameObject.GetComponent<Disk>();
-        if (!Board.Instance.isYourTurn || !disk || disk.Alliance == (Board.Instance.isHost ? 0 : 1)) return;
+        if (!Board.Instance.isYourTurn || !disk) {
+            return;
+        }
+
+        // If this is your oppponent disk, return
+        // We only handle current player disks disks of the opposite color
+        if(disk.Alliance == Board.Instance.CurrentTurnAlliance()) {
+            return;
+        }
+
+
+        Debug.Log("Current Turn Alliance: " + Board.Instance.CurrentTurnAlliance());
+        Debug.Log("Collision " + Id + " Player Alliance : " + (Board.Instance.isHost ? 1 : 0) + ", isYourTurn: " + Board.Instance.isYourTurn);
+        Debug.Log("ATK-ID: " + Id + " ,TARGET-ID: " + disk.Id);
+
+        // Disk is the enemy
 
         // Alliance is current player alliance
-        if ((Board.Instance.isYourTurn) && (disk.Alliance != Alliance)) {
+        if (disk.Alliance != Alliance) {
             if (classType == ClassType.Rock) {
                 if (disk.classType == ClassType.Paper) {
                     disk.DealDamage(Attack * 0.5);
@@ -264,11 +280,11 @@ public class Disk : Photon.PunBehaviour {
     }
 
     private void DealDamage(double dmg) {
-        if (Board.Instance.isYourTurn) {
-            if (PhotonNetwork.connected) {
-                PhotonView photonView = PhotonView.Get(this);
-                photonView.RPC("PunDealDamage", PhotonTargets.All, dmg);
-            }
+        if (PhotonNetwork.connected) {
+            PhotonView photonView = PhotonView.Get(this);
+            photonView.RPC("PunDealDamage", PhotonTargets.All, dmg);
+        } else {
+            PunDealDamage(dmg);
         }
     }
 
@@ -277,7 +293,6 @@ public class Disk : Photon.PunBehaviour {
 
         Health = Health - dmg;
         HealthBar.value = (float)Health;
-        //health.SetBar((float)Health, (float)TotalHealth);
 
         if (Health < 0 && Board.Instance.isYourTurn) {
             PhotonNetwork.Destroy(photonView);
