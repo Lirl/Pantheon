@@ -73,6 +73,10 @@ public class Disk : Photon.PunBehaviour {
             Destroy(GetComponent<SpringJoint>());
         }
 
+        if(!Board.Instance.isHost) {
+            transform.rotation = Quaternion.Euler(0, 180, 0);
+        }
+        
         Alliance = alliance;
 
         // Set disk color
@@ -213,13 +217,15 @@ public class Disk : Photon.PunBehaviour {
 
     private void OnCollisionEnter(Collision collision) {
         var disk = collision.gameObject.GetComponent<Disk>();
-        if (!Board.Instance.isYourTurn || !disk || disk.Alliance == (Board.Instance.isHost ? 1 : 0)) return;
+        if (!Board.Instance.isYourTurn || !disk || disk.Alliance == (Board.Instance.isHost ? 0 : 1)) return;
+
+        // Alliance is current player alliance
         if ((Board.Instance.isYourTurn) && (disk.Alliance != Alliance)) {
             if (classType == ClassType.Rock) {
                 if (disk.classType == ClassType.Paper) {
-                    disk.DealDamage((int)(Attack * 0.5));
+                    disk.DealDamage(Attack * 0.5);
                 } else if (disk.classType == ClassType.Scissors) {
-                    disk.DealDamage((int)(Attack * 2));
+                    disk.DealDamage(Attack * 2);
                 } else {
                     disk.DealDamage(Attack);
                 }
@@ -227,17 +233,17 @@ public class Disk : Photon.PunBehaviour {
                 if (disk.classType == ClassType.Paper) {
                     disk.DealDamage(Attack);
                 } else if (disk.classType == ClassType.Scissors) {
-                    disk.DealDamage((double)(Attack * 0.5));
+                    disk.DealDamage(Attack * 0.5);
                 } else {
-                    disk.DealDamage((double)(Attack * 2));
+                    disk.DealDamage(Attack * 2);
                 }
             } else {
                 if (disk.classType == ClassType.Scissors) {
                     disk.DealDamage(Attack);
                 } else if (disk.classType == ClassType.Rock) {
-                    disk.DealDamage((double)(Attack * 0.5));
+                    disk.DealDamage(Attack * 0.5);
                 } else {
-                    disk.DealDamage((double)(Attack * 2));
+                    disk.DealDamage(Attack * 2);
                 }
             }
         }
@@ -261,11 +267,12 @@ public class Disk : Photon.PunBehaviour {
         if (Board.Instance.isYourTurn) {
             if (PhotonNetwork.connected) {
                 PhotonView photonView = PhotonView.Get(this);
-                photonView.RPC("PunForceSyncPosition", PhotonTargets.All, dmg);
+                photonView.RPC("PunDealDamage", PhotonTargets.All, dmg);
             }
         }
     }
 
+    [PunRPC]
     private void PunDealDamage(double dmg) {
 
         Health = Health - dmg;
