@@ -341,7 +341,7 @@ public class Board : Photon.PunBehaviour {
             return;
         }
 
-        float step = 12 * Time.deltaTime;
+        float step = 24 * Time.deltaTime;
         if (Vector3.Distance(AILastCreatedDisk.transform.position, AIAimDiskPosition) < 0.1) {
             AIAimDiskPositionChosen = false;
             AIReleaseDisk();
