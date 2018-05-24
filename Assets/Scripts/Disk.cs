@@ -15,6 +15,7 @@ public class Disk : Photon.PunBehaviour {
     public float cameraAdjuster;
     public float endTurn;
     public Slider HealthBar;
+    public float HeightOffSet;
 
     LineRenderer line;
     public SpringJoint SJ;
@@ -90,7 +91,7 @@ public class Disk : Photon.PunBehaviour {
             HealthBar.value = (float)Health;
         }
         Id = GenerateId();
-
+        HeightOffSet = (Id == 3) ? 0.1f : 0;
         Board.Instance.SaveDisk(Id, this);
     }
 
@@ -108,7 +109,7 @@ public class Disk : Photon.PunBehaviour {
         }
 
         if (_released) {
-            transform.position = new Vector3(transform.position.x, 0.1f, transform.position.z);
+            transform.position = new Vector3(transform.position.x, 0.1f + HeightOffSet, transform.position.z);
         }
 
         if (enlarge) {
