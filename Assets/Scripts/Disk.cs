@@ -124,7 +124,7 @@ public class Disk : Photon.PunBehaviour {
         if (inField && !outOfBounds) {
             CheckIfOutOfBounds();
         }
-        if (outOfBounds && gameObject.transform.localScale.x > 0.1) {
+        if ((outOfBounds && gameObject.transform.localScale.x > 0.1) || (Health <= 0 && gameObject.transform.localScale.x > 0.1)) {
             gameObject.transform.localScale -= new Vector3(0.05f, 0, 0.05f);
         }
         if (gameObject.transform.localScale.x < 0.1 && Board.Instance.isYourTurn) {
@@ -295,9 +295,7 @@ public class Disk : Photon.PunBehaviour {
         Health = Health - dmg;
         HealthBar.value = (float)Health;
 
-        if (Health < 0 && Board.Instance.isYourTurn) {
-            PhotonNetwork.Destroy(photonView);
-        }
+
     }
 
     internal void DestroyDisk() {

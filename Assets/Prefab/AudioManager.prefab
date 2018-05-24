@@ -1,0 +1,109 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &100100000
+Prefab:
+  m_ObjectHideFlags: 1
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications: []
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 0}
+  m_RootGameObject: {fileID: 1349659525737044}
+  m_IsPrefabParent: 1
+--- !u!1 &1349659525737044
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  serializedVersion: 5
+  m_Component:
+  - component: {fileID: 4295559375113370}
+  - component: {fileID: 114194527563457776}
+  m_Layer: 0
+  m_Name: AudioManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4295559375113370
+Transform:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1349659525737044}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.3366985, y: 71.031906, z: 70.69824}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &114194527563457776
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1349659525737044}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f092abd57cdb9c54aa72048133af17db, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  sounds:
+  - name: Wall
+    clip: {fileID: 8300000, guid: 4607bec6b00f82b4b9ebdd2b7be37714, type: 3}
+    volume: 0
+    pitch: 0
+    src: {fileID: 0}
+  - name: Character Explosion
+    clip: {fileID: 8300000, guid: 6c22684c7df12bb46aa67e56f12ca5a2, type: 3}
+    volume: 0
+    pitch: 0
+    src: {fileID: 0}
+  - name: Game End
+    clip: {fileID: 8300000, guid: 7d9b626738f15e646bc4ea0d0ba5e661, type: 3}
+    volume: 0
+    pitch: 0
+    src: {fileID: 0}
+  - name: Disk Grab
+    clip: {fileID: 8300000, guid: 06533f46ada64184ca82dd8ce6a3f8ec, type: 3}
+    volume: 0
+    pitch: 0
+    src: {fileID: 0}
+  - name: Disk Grab Mode (Loop)
+    clip: {fileID: 8300000, guid: 885ada751de048f42a9cbc0e96a023c0, type: 3}
+    volume: 0
+    pitch: 0
+    src: {fileID: 0}
+  - name: Disks Clashing
+    clip: {fileID: 8300000, guid: a27d2a1ade8c37c44acea1e81ebb4a09, type: 3}
+    volume: 0
+    pitch: 0
+    src: {fileID: 0}
+  - name: Trail Renderer Sound
+    clip: {fileID: 8300000, guid: 867b8b787808a4e47ac4bd6dadc9fdfb, type: 3}
+    volume: 0
+    pitch: 0
+    src: {fileID: 0}
+  - name: Game Start
+    clip: {fileID: 8300000, guid: 3652c383938a6c742b3c4bfa522c28b8, type: 3}
+    volume: 0
+    pitch: 0
+    src: {fileID: 0}
+  - name: Brown Button
+    clip: {fileID: 8300000, guid: 00fc09f6bb3d2614e888447418ce0b52, type: 3}
+    volume: 1
+    pitch: 1.25
+    src: {fileID: 0}
+  - name: White Button
+    clip: {fileID: 8300000, guid: e44f9a57adcab264bbf9973697460058, type: 3}
+    volume: 0
+    pitch: 0
+    src: {fileID: 0}
+  - name: Level
+    clip: {fileID: 8300000, guid: 233d9878fe49fd1499787298457f9929, type: 3}
+    volume: 0
+    pitch: 0
+    src: {fileID: 0}
