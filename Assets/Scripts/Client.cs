@@ -108,7 +108,7 @@ public class Client : MonoBehaviour
                 //Board.Instance.HandleSyncTiles(int.Parse(aData[1]), aData[2], aData[3]);
                 break;
             case "SCREATEPOWERUP":
-                Board.Instance.HandleCreatePowerUp(int.Parse(aData[1]), int.Parse(aData[2]), int.Parse(aData[2]));
+                //Board.Instance.HandleCreatePowerUp(int.Parse(aData[1]), int.Parse(aData[2]), int.Parse(aData[2]));
                 break;
             case "SSHOWINNER":
                 Board.Instance.HandleShowWinner(int.Parse(aData[1]));

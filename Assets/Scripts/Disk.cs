@@ -45,8 +45,12 @@ public class Disk : Photon.PunBehaviour {
     }
 
     public void Init(int alliance) {
-        PhotonView photonView = PhotonView.Get(this);
-        photonView.RPC("PunInit", PhotonTargets.All, alliance);
+        if (PhotonNetwork.connected) {
+            PhotonView photonView = PhotonView.Get(this);
+            photonView.RPC("PunInit", PhotonTargets.All, alliance);
+        } else {
+            PunInit(alliance);
+        }
     }
 
     [PunRPC]
@@ -65,7 +69,6 @@ public class Disk : Photon.PunBehaviour {
             Destroy(GetComponent<SpringJoint>());
         }
 
-        Debug.Log("PunInit : " + alliance);
         Alliance = alliance;
         mesh = SJ.connectedBody.GetComponent<MeshRenderer>();
         line.SetPosition(0, SJ.connectedBody.position);
@@ -76,6 +79,8 @@ public class Disk : Photon.PunBehaviour {
 
         Board.Instance.SaveDisk(Id, this);
     }
+
+
 
     public void Init(int alliance, bool enable) {
         Enable = enable;
@@ -112,8 +117,6 @@ public class Disk : Photon.PunBehaviour {
 
         _released = false;
 
-        GetComponent<PhotonTransformView>();
-
         originalPosition = transform.position;
 
         isMouseDown = true;
@@ -137,14 +140,16 @@ public class Disk : Photon.PunBehaviour {
         var pos = transform.position;
         transform.position = originalPosition;
 
-        PhotonView photonView = PhotonView.Get(this);
-        photonView.RPC("Release", PhotonTargets.All, pos);
-
-        //Release(pos);
+        if(PhotonNetwork.connected) {
+            PhotonView photonView = PhotonView.Get(this);
+            photonView.RPC("Release", PhotonTargets.All, pos);
+        } else {
+            Release(pos);
+        }
     }
 
     [PunRPC]
-    public void Release(Vector3 pos, PhotonMessageInfo info) {
+    public void Release(Vector3 pos) {
         Debug.Log("Release fired for player " + (Board.Instance.isHost ? 1 : 0) + " pos: " + transform.position.x + "," + transform.position.y + "," + transform.position.z);
 
         _released = true;
@@ -163,6 +168,7 @@ public class Disk : Photon.PunBehaviour {
     }
 
     public void StopMoving() {
+        Debug.Log("StopMoving called");
         Rigidbody.velocity = Vector3.zero;
     }
 
@@ -217,15 +223,41 @@ public class Disk : Photon.PunBehaviour {
         }
     }
 
-    private void DealDamage(double dmg) {
-        Health = Health - dmg;
-        if (Health < 0) {
-            PhotonNetwork.Destroy(photonView);
+    public void ForceSyncPosition() {
+        if(Board.Instance.isYourTurn) {
+            Debug.Log("ForceSyncPosition called");
+            if (PhotonNetwork.connected) {
+                PhotonView photonView = PhotonView.Get(this);
+                photonView.RPC("PunForceSyncPosition", PhotonTargets.All, transform.position);
+            }
         }
     }
 
+    [PunRPC]
+    public void PunForceSyncPosition(Vector3 pos, PhotonMessageInfo info) {
+        transform.position = pos;
+    }
+
+
+    private void DealDamage(double dmg) {
+
+    }
+
+    [PunRPC]
+    private void PunDealDamage(double dmg, PhotonMessageInfo info) {
+        /*Health = Health - dmg;
+        if (Health < 0) {
+            PhotonNetwork.Destroy(photonView);
+        }*/
+    }
+
     internal void DestroyDisk() {
-        PhotonNetwork.Destroy(photonView);
+        if(PhotonNetwork.connected) {
+            PhotonNetwork.Destroy(photonView);
+        } else {
+            // TODO: have a death effect
+            Destroy(gameObject);
+        }
     }
 
 
@@ -246,5 +278,9 @@ public class Disk : Photon.PunBehaviour {
         else {
             Alliance = (int)stream.ReceiveNext();
         }
+    }
+
+    void OnDestroy() {
+        Debug.Log("Disk " + Id + " destroyed");
     }
 }

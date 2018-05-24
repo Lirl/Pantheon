@@ -37,6 +37,9 @@ public class Explosion : MonoBehaviour {
     }
 
     private void Explode() {
+        if(!Board.Instance.isYourTurn) {
+            return;
+        }
 
         Collider[] toBlast = Physics.OverlapSphere(transform.position, radius + (gameObject.transform.localScale.x / 6));
 

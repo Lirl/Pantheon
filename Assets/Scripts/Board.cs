@@ -30,7 +30,6 @@ public class Board : Photon.PunBehaviour {
     public Transform chatMessageContainer;
     public GameObject messagePrefab;
 
-    public GameObject highlightsContainer;
     public GameObject DummyDisk;
 
     public CanvasGroup alertCanvas;
@@ -38,9 +37,19 @@ public class Board : Photon.PunBehaviour {
     private GameObject opponentScore;
     private float lastAlert;
     private bool alertActive;
+
+
     private bool gameIsOver;
-    private float winTime;
     public float gameTime = 10f;
+
+    public bool isYourTurn;
+    public bool TurnHasEnded { get; private set; }
+    public List<Disk> DisksList = new List<Disk>();
+
+    private Vector2 mouseOver;
+    private Vector3 prevDiskIdleResult = new Vector3(-1, -1, -1);
+
+    public List<CardInformation> CardTypes = new List<CardInformation>();
 
     private bool isZoomedOut = false;
     private bool isZoomedIn = false;
@@ -57,40 +66,20 @@ public class Board : Photon.PunBehaviour {
     public GameObject LoseMessage;
     public GameObject BackToMenu;
 
-    internal void SaveDisk(int id, Disk disk) {
-        Disks.Add(id, disk);
-    }
+    #region AI Properties
+    public bool isTutorial = false;
+    public GameObject AILastCreatedDisk;
+    public bool AIAimDiskPositionChosen;
+    public Vector3 AIAimDiskPosition;
+    #endregion
 
-    internal void OnDiskReleased(Disk disk) {
-        if (disk.Alliance == (isHost ? 1 : 0)) {
-            // This is the player that played the move
-            // He should end the turn
-            Invoke("OnDisksIdleTrigger", 1);
-        }
-    }
-
-    public bool isYourTurn;
-
-    public bool TurnHasEnded { get; private set; }
-
-    private bool hasKilled;
-
-    private Vector2 mouseOver;
-    private Vector2 startDrag;
-    private Vector2 endDrag;
-
-    public Text MessageBox;
-
-    public List<CardInformation> CardTypes = new List<CardInformation>();
-
-    private Client client;
-    private Vector3 prevDiskIdleResult = new Vector3(-1, -1, -1);
-
-    public string SyncTilesString;
+    private Disk currentlyReleasedDisk;
+    private bool _diskIdleTriggered;
 
     private void Start() {
         Instance = this;
-        client = FindObjectOfType<Client>();
+
+        // UI Setop
         Hand = GameObject.Find("Hand");
         TimeMessage = GameObject.Find("TimeMessage") as GameObject;
 
@@ -102,18 +91,19 @@ public class Board : Photon.PunBehaviour {
         LoseMessage.SetActive(false);
         BackToMenu.SetActive(false);
 
-        /*if (highlightsContainer) {
-            foreach (Transform t in highlightsContainer.transform) {
-                t.position = Vector3.down * 100;
-            }
-        }*/
 
+        // Check player connectivity
         if (PhotonNetwork.connected) {
             isHost = GameManager.Instance.isHost;
-            //Alert(client.players[0].name + " versus " + client.players[1].name);
-        }
-        else {
+        } else {
             isHost = true;
+        }
+
+        // The only way this condition will suffies
+        // is when the user has entered his first game, which loads this scene without being
+        // connected to a room
+        if(!PhotonNetwork.inRoom) {
+            isTutorial = true;
         }
 
         Alert(isHost ? "I am Host" : "I am Client");
@@ -135,7 +125,9 @@ public class Board : Photon.PunBehaviour {
             Hand.SetActive(false);
         }
 
-        if (isHost) {
+        if(isTutorial) {
+            StartTurnTutorial();
+        } else if (isHost) {
             // Host starts
             StartTurn();
             Invoke("CreatePowerUp", 1f);
@@ -144,119 +136,8 @@ public class Board : Photon.PunBehaviour {
     }
 
 
-    internal void HandleShowWinner(int alliance) {
-        Debug.Log("HandleShowWinner started");
-        if (Hand) {
-            Hand.SetActive(false);
-        }
 
-        if (alliance == (isHost ? 1 : 0)) {
-            WinMessage.SetActive(true);
-        }
-        else {
-            LoseMessage.SetActive(true);
-        }
-        BackToMenu.SetActive(true);
-    }
-
-    public void OnDisksIdleTrigger() {
-
-        var pos = new Vector3(0, 0, 0);
-        foreach (var pair in Disks) {
-            if (pair.Value) {
-                pos += pair.Value.transform.position;
-            }
-        }
-
-        var thresh = pos - prevDiskIdleResult;
-
-        // Meaning disks stopped moving
-        if (Math.Abs(thresh.x + thresh.z) < 1) {
-            //Debug.Log("Disks stopped moving ! thresh " + (thresh.x + thresh.z));
-            OnDisksIdle();
-        }
-        else {
-            prevDiskIdleResult = pos;
-            //Debug.Log("OnDisksIdleTrigger Invoke Started " + (thresh.x + thresh.z));
-            Invoke("OnDisksIdleTrigger", 1);
-        }
-    }
-
-    public void OnDisksIdle() {
-        Debug.Log("OnDisksIdle");
-        if (isYourTurn) {
-            EndTurn();
-        }
-    }
-
-    public void CheckWinner() {
-        Debug.Log("CheckWinner");
-        if (Score[0] >= Score[1]) {
-            HandleShowWinner(0);
-        }
-        else {
-            HandleShowWinner(1);
-        }
-
-        gameIsOver = true;
-    }
-
-    internal void OnDiskClick(Disk disk) {
-        isZoomedIn = false;
-        isZoomedOut = true;
-    }
-
-    public void StartTurn() {
-        if (gameIsOver) {
-            return;
-        }
-
-        isYourTurn = true;
-        TurnHasEnded = false;
-
-        Alert("Player " + (isHost ? 1 : 2) + " turn #" + TurnCounter + " YourTurn: " + isYourTurn);
-        Debug.Log("Player " + (isHost ? 1 : 2) + " turn #" + TurnCounter + " YourTurn: " + isYourTurn);
-
-        Alert("Player " + (isHost ? 1 : 2) + " turn #" + TurnCounter);
-        // Add a new card to player hand (current turn)
-        DrawCard(); 
-
-        // 10 seconds turn
-        //Invoke("EndTurn", 10);
-
-        if (Hand) {
-            Hand.SetActive(true);
-        }
-
-        isZoomedOut = true;
-    }
-
-    internal void HandleDestroyDisk(int id) {
-        var disk = Disks[id];
-        if (disk) {
-            disk.DestroyDisk();
-        }
-    }
-
-    internal void DestroyDisk(Disk disk) {
-        HandleDestroyDisk(disk.Id);
-    }
-
-    internal bool isActiveDisk(GameObject gameObject) {
-        throw new NotImplementedException();
-    }
-
-    private void DrawCard() {
-        if (Deck.Count == 0) {
-            Debug.LogError("Deck is empty");
-            return;
-        }
-
-        int code = Deck[0];
-        Deck.RemoveAt(0);
-
-        Card.CreateCard(code, Hand.transform);
-    }
+    #region Disk Management
 
     public void CreateSelectedDisk() {
 
@@ -277,13 +158,338 @@ public class Board : Photon.PunBehaviour {
         CreateDisk((isHost ? 1 : 0), code);
     }
 
-    private void Update() {
-        if (Input.GetMouseButtonDown(0)) {
+    internal GameObject CreateDisk(int alliance, int code) {
+        Debug.Log("CreateDisk excepted. alliance = " + alliance + " code = " + code);
+        GameObject hook = GetHook(alliance);
 
-            //ShowMessage("Click x: " + mouseOver.x + " : " + mouseOver.y);
+        Debug.Log("Attempting to load prefab " + "Characters/Character" + code + " for alliance " + alliance + " isYourTurn " + isYourTurn);
+        var prefab = Resources.Load("Characters/Character" + code) as GameObject;
+        var offset = (code == 3 ? 7f : 3f);
 
-            //SetTileAlliance((isHost ? 0 : 1), (int)mouseOver.x, (int)mouseOver.y);
+        GameObject ins;
+        if (PhotonNetwork.connected) {
+            ins = PhotonNetwork.Instantiate("Characters/Character" + code, hook.transform.position + new Vector3(0, 3f, 0), Quaternion.identity, 0);
+        } else {
+            ins = Instantiate(prefab, new Vector3(hook.transform.position.x, hook.transform.position.y + 1.5f, hook.transform.position.z), Quaternion.identity);
         }
+        ins.GetComponent<SpringJoint>().connectedBody = hook.GetComponent<Rigidbody>();
+        ins.GetComponent<Disk>().Init(alliance, isYourTurn);
+
+        // Handle UI
+        if (Hand) {
+            Hand.SetActive(false);
+        }
+
+        return ins;
+    }
+
+    public GameObject GetHook(int alliance) {
+        if (alliance == 1) {
+            return GameObject.Find("HostHook");
+        } else {
+            return GameObject.Find("ClientHook");
+        }
+    }
+
+    internal GameObject CreateDisk(int alliance) {
+        GameObject hook;
+        if (alliance == 1) {
+            hook = GameObject.Find("HostHook");
+        } else {
+            hook = GameObject.Find("ClientHook");
+        }
+        GameObject ins;
+        if(PhotonNetwork.connected) {
+             ins = PhotonNetwork.Instantiate(DummyDisk.name, hook.transform.position, Quaternion.identity, 0);
+        } else {
+            ins = Instantiate(DummyDisk, hook.transform.position, Quaternion.identity);
+        }
+        
+        ins.GetComponent<Disk>().Init(alliance);
+
+        // Handle UI
+        if (Hand) {
+            Hand.SetActive(false);
+        }
+
+        return ins;
+    }
+    internal GameObject CreateDisk(float x, float y) {
+        return PhotonNetwork.Instantiate(DummyDisk.name, new Vector3(x, 0, y) - boardOffset, Quaternion.identity, 0);
+    }
+    internal GameObject CreateDisk(GameObject go, int x, int y) {
+        return PhotonNetwork.Instantiate(go.name, new Vector3(x, 0, y) - boardOffset, Quaternion.identity, 0);
+    }
+    internal GameObject CreateDisk(GameObject go, Vector3 position) {
+        Debug.Log("Creating disk " + position);
+        var ins = PhotonNetwork.Instantiate(go.name, position, Quaternion.identity, 0);
+        ins.GetComponent<SpringJoint>().connectedAnchor = new Vector3(0, 1.9f, 0);
+        return ins;
+    }
+
+    public void OnDisksIdleTrigger() {
+        var pos = new Vector3(0, 0, 0);
+        try {
+            for(int i = 0; i < DisksList.Count; i++) {
+                if (DisksList[i]) {
+                    pos += DisksList[i].gameObject.GetComponent<Rigidbody>().velocity;
+                }
+            }
+        } catch(Exception e) {
+            Debug.Log("Exception : " + e.Message);
+        }
+
+        Debug.Log(pos);
+
+        var thresh = pos - prevDiskIdleResult;
+
+        // Meaning disks stopped moving
+        if (Math.Abs(thresh.x + thresh.z) < 1) {
+            if (currentlyReleasedDisk) {
+                currentlyReleasedDisk.ForceSyncPosition();
+            }
+
+            OnDisksIdle();
+        } else {
+            prevDiskIdleResult = pos;
+            Invoke("OnDisksIdleTrigger", 1);
+        }
+    }
+
+    void OnDestroy() {
+        Debug.Log("I was killed? :(");
+    }
+
+    public void OnDisksIdle() {
+        Debug.Log("OnDisksIdle");
+        if(!_diskIdleTriggered) {
+            _diskIdleTriggered = true;
+            if(isTutorial) {
+                EndTurnTutorial();
+            } else {
+                EndTurn();
+            }
+        }
+    }
+
+    internal void HandleDestroyDisk(int id) {
+        var disk = Disks[id];
+        if (disk) {
+            disk.DestroyDisk();
+        }
+    }
+
+    internal void DestroyDisk(Disk disk) {
+        HandleDestroyDisk(disk.Id);
+    }
+
+    internal void SaveDisk(int id, Disk disk) {
+        Disks.Add(id, disk);
+        DisksList.Add(disk);
+    }
+
+    #endregion
+
+
+    #region AI
+
+    public int GetAICardCode() {
+
+        //TODO: continue here
+        switch(TurnCounter) {
+            case 2:
+                
+                // First move by the player, summon a priest
+                return 3; // groot
+
+            default:
+                break;
+
+        }
+
+        return UnityEngine.Random.Range(0, 3);
+    }
+
+    public void AIAimDisk() {
+        Debug.Log("AIAimDisk " + (isYourTurn ? "your turn" : "not your turn"));
+        // Find all disks of the opponent (human player)
+        var hook = GetHook(0);
+        var enemies = DisksList.FindAll(disk => disk && disk.Alliance == 1);
+        enemies.Sort(delegate (Disk d1, Disk d2) {
+            if (Vector3.Distance(d1.gameObject.transform.position, hook.transform.position) > Vector3.Distance(d2.transform.position, hook.transform.position)) {
+                return 1;
+            } else {
+                return -1;
+            }
+        });
+
+        /*Vector3 aim = (enemies[0].transform.position - hook.transform.position).normalized;
+        AIAimDiskPosition = hook.transform.position + (aim * -40);*/
+
+        AIAimDiskPosition = new Vector3(AILastCreatedDisk.transform.position.x + UnityEngine.Random.Range(-20.0f, 20.0f), AILastCreatedDisk.transform.position.y, AILastCreatedDisk.transform.position.z + UnityEngine.Random.Range(10.0f, 30.0f));
+
+        // So SpringJoint will not drag it out off aiming position
+        AILastCreatedDisk.GetComponent<Rigidbody>().isKinematic = true;
+
+        // Start aiming
+        AIAimDiskPositionChosen = true;
+    }
+
+    // Triggered in update when AIAimDiskPositionChosen == true
+    public void HandleAIAiming() {
+        if(!isTutorial || !AIAimDiskPositionChosen) {
+            return;
+        }
+
+        float step = 12 * Time.deltaTime;
+        if (Vector3.Distance(AILastCreatedDisk.transform.position, AIAimDiskPosition) < 0.1) {
+            AIAimDiskPositionChosen = false;
+            AIReleaseDisk();
+        } else {
+            AILastCreatedDisk.transform.position = Vector3.MoveTowards(AILastCreatedDisk.transform.position, AIAimDiskPosition, step);
+        }
+    }
+
+    public void AIReleaseDisk() {
+        Debug.Log("AIReleaseDisk");
+        AILastCreatedDisk.GetComponent<Disk>().Release(AIAimDiskPosition);
+    }
+
+    #endregion
+
+    #region Tutorial Functions
+
+    public void StartTurnTutorial() {
+        // Human Player
+        if (isHost) {
+            isYourTurn = true;
+            DrawCard();
+            if (Hand) {
+                Hand.SetActive(true);
+            }
+
+        } else {
+            // AI
+            Invoke("AIMove", 1);
+        }
+        isZoomedOut = true;
+    }
+
+    public void AIMove() {
+        int cardCode = GetAICardCode();
+        AILastCreatedDisk = CreateDisk(0, cardCode);
+
+        Invoke("AIAimDisk", 2);
+    }
+
+    public void EndTurnTutorial() {
+
+        // Human Player
+        if (isHost) {
+            if (Hand) {
+                Hand.SetActive(false);
+            }
+        }
+
+        isHost = !isHost;
+        StartTurnTutorial();
+    }
+
+    #endregion
+
+    #region Game Loop
+
+    public void StartTurn() {
+        if (gameIsOver) {
+            return;
+        }
+
+        isYourTurn = true;
+        TurnHasEnded = false;
+
+        Alert("Player " + (isHost ? 1 : 2) + " turn #" + TurnCounter + " YourTurn: " + isYourTurn);
+        Debug.Log("Player " + (isHost ? 1 : 2) + " turn #" + TurnCounter + " YourTurn: " + isYourTurn + " isHost: " + isHost);
+
+        Alert("Player " + (isHost ? 1 : 2) + " turn #" + TurnCounter);
+        // Add a new card to player hand (current turn)
+        DrawCard();
+
+        // 10 seconds turn
+        // TODO: add end turn indication
+        //Invoke("EndTurn", 10);
+        
+        if (Hand) {
+            Hand.SetActive(true);
+        }
+        
+        isZoomedOut = true;
+    }
+
+    private void DrawCard() {
+        if (Deck.Count == 0) {
+            Debug.LogError("Deck is empty");
+            return;
+        }
+
+        int code = Deck[0];
+        Deck.RemoveAt(0);
+
+        Card.CreateCard(code, Hand.transform);
+    }
+
+    private void EndTurn() {
+        Debug.Log("EndTurn " + (isYourTurn ? "your turn" : "not your turn"));
+        if (isYourTurn && !TurnHasEnded) {
+            TurnHasEnded = true;
+
+            // That's all you need to do for switching the turn
+            // BoardSync will sync that data, and trigger SetTurn on the other player.
+            // By doing so, the other player will trigger StartTurn, that will continue game loop as normal
+            TurnCounter++;
+            // We shouldnt sync tiles if we are not connected
+
+            isYourTurn = false;
+
+            if (Hand) {
+                Hand.SetActive(false);
+            }
+
+            if (PhotonNetwork.connected) {
+                PhotonNetwork.RaiseEvent(0, GetTilesAsString(), true, null);
+            } else {
+                isHost = !isHost;
+                StartTurn();
+            }
+        }
+    }
+
+    public void CheckWinner() {
+        Debug.Log("CheckWinner");
+        if (Score[0] >= Score[1]) {
+            HandleShowWinner(0);
+        } else {
+            HandleShowWinner(1);
+        }
+
+        gameIsOver = true;
+    }
+
+    internal void HandleShowWinner(int alliance) {
+        Debug.Log("HandleShowWinner started");
+        if (Hand) {
+            Hand.SetActive(false);
+        }
+
+        if (alliance == (isHost ? 1 : 0)) {
+            WinMessage.SetActive(true);
+        } else {
+            LoseMessage.SetActive(true);
+        }
+        BackToMenu.SetActive(true);
+    }
+    #endregion
+
+    private void Update() {
 
         gameTime -= Time.deltaTime;
         if (gameTime >= 0 && !gameIsOver) {
@@ -296,8 +502,7 @@ public class Board : Photon.PunBehaviour {
         if (isZoomedIn) {
             if (Camera.main.orthographicSize >= 45) {
                 Camera.main.orthographicSize -= 0.5f;
-            }
-            else {
+            } else {
                 isZoomedIn = false;
             }
         }
@@ -305,30 +510,40 @@ public class Board : Photon.PunBehaviour {
         if (isZoomedOut) {
             if (Camera.main.orthographicSize <= 75) {
                 Camera.main.orthographicSize += 0.5f;
-            }
-            else {
+            } else {
                 isZoomedOut = false;
             }
         }
 
         UpdateAlert();
         UpdateMouseOver();
+        HandleAIAiming();
     }
+
+    #region Power Ups
 
     internal void CreatePowerUp() {
-        return;
         int x = UnityEngine.Random.Range(1, MAP_WIDTH_REAL - 1);
         int y = UnityEngine.Random.Range(1, MAP_HEIGHT_REAL - 1);
-        int amount = UnityEngine.Random.Range(0, powerUpsAmount);
+        int code = UnityEngine.Random.Range(0, powerUpsAmount);
 
-        HandleCreatePowerUp(amount, x, y);
-
+        if (PhotonNetwork.connected) {
+            photonView.RPC("HandleCreatePowerUp", PhotonTargets.All, code, x, y);
+        } else {
+            PunHandleCreatePowerUp(code, x, y);
+        }
     }
 
-    internal GameObject HandleCreatePowerUp(int code, int x, int y) {
+    [PunRPC]
+    internal GameObject PunHandleCreatePowerUp(int code, int x, int y) {
         var toInstantiate = Resources.Load("Characters/PowerUps" + code) as GameObject;
         if (Tiles[x, y] && toInstantiate) {
-            GameObject rune = PhotonNetwork.Instantiate("Characters/PowerUps" + code, Tiles[x, y].transform.position + new Vector3(0, 2f, 0), Quaternion.Euler(new Vector3(45, 45, 45)), 0);
+            GameObject rune;
+            if (PhotonNetwork.connected) {
+                rune = PhotonNetwork.Instantiate("Characters/PowerUps" + code, Tiles[x, y].transform.position + new Vector3(0, 2f, 0), Quaternion.Euler(new Vector3(45, 45, 45)), 0);
+            } else {
+                rune = Instantiate(toInstantiate, Tiles[x, y].transform.position + new Vector3(0, 2f, 0), Quaternion.Euler(new Vector3(45, 45, 45)));
+            }
             var runeScript = rune.GetComponent<PowerUp>();
             runeScript.code = code;
             runeScript.xTile = x;
@@ -344,63 +559,7 @@ public class Board : Photon.PunBehaviour {
         return null;
     }
 
-    internal GameObject CreateDisk(int alliance, int code) {
-        Debug.Log("CreateDisk excepted. alliance = " + alliance + " code = " + code);
-        GameObject hook;
-        if (alliance == 1) {
-            hook = GameObject.Find("HostHook");
-        }
-        else {
-            hook = GameObject.Find("ClientHook");
-        }
-
-        Debug.Log("Attempting to load prefab " + "Characters/Character" + code + " for alliance " + alliance + " isYourTurn " + isYourTurn);
-        var prefab = Resources.Load("Characters/Character" + code) as GameObject;
-        var offset = (code == 3 ? 7f : 3f);
-        var ins = PhotonNetwork.Instantiate("Characters/Character" + code, hook.transform.position + new Vector3(0, 3f, 0), Quaternion.identity, 0);
-
-        ins.GetComponent<SpringJoint>().connectedBody = hook.GetComponent<Rigidbody>();
-        ins.GetComponent<Disk>().Init(alliance, isYourTurn);
-
-        // Handle UI
-        if (Hand) {
-            Hand.SetActive(false);
-        }
-
-        return ins;
-    }
-
-    internal GameObject CreateDisk(int alliance) {
-        GameObject hook;
-        if (alliance == 1) {
-            hook = GameObject.Find("HostHook");
-        } else {
-            hook = GameObject.Find("ClientHook");
-        }
-
-        var ins = PhotonNetwork.Instantiate(DummyDisk.name, hook.transform.position, Quaternion.identity, 0);
-        ins.GetComponent<Disk>().Init(alliance);
-
-        // Handle UI
-        if (Hand) {
-            Hand.SetActive(false);
-        }
-
-        return ins;
-    }
-
-    internal GameObject CreateDisk(float x, float y) {
-        return PhotonNetwork.Instantiate(DummyDisk.name, new Vector3(x, 0, y) - boardOffset, Quaternion.identity, 0);
-    }
-    internal GameObject CreateDisk(GameObject go, int x, int y) {
-        return PhotonNetwork.Instantiate(go.name, new Vector3(x, 0, y) - boardOffset, Quaternion.identity, 0);
-    }
-    internal GameObject CreateDisk(GameObject go, Vector3 position) {
-        Debug.Log("Creating disk " + position);
-        var ins = PhotonNetwork.Instantiate(go.name, position, Quaternion.identity, 0);
-        ins.GetComponent<SpringJoint>().connectedAnchor = new Vector3(0, 1.9f, 0);
-        return ins;
-    }
+    #endregion
 
     private void UpdateMouseOver() {
         if (!Camera.main) {
@@ -412,48 +571,10 @@ public class Board : Photon.PunBehaviour {
         if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit, 50.0f, LayerMask.GetMask("Board"))) {
             mouseOver.x = (int)(hit.point.x + boardOffset.x);
             mouseOver.y = (int)((hit.point.z + -1 * boardOffset.z) * -1);
-        }
-        else {
+        } else {
             mouseOver.x = -1;
             mouseOver.y = -1;
         }
-    }
-
-    private void EndTurn() {
-        if (isYourTurn && !TurnHasEnded) {
-            TurnHasEnded = true;
-
-            Debug.Log("EndTurn");
-
-            // That's all you need to do for switching the turn
-            // BoardSync will sync that data, and trigger SetTurn on the other player.
-            // By doing so, the other player will trigger StartTurn, that will continue game loop as normal
-            TurnCounter++;
-            PhotonNetwork.RaiseEvent(0, GetTilesAsString(), true, null);
-            isYourTurn = false;
-
-            Debug.Log("TurnCounter is now : " + TurnCounter);
-
-            // StartTurn(); start turn is invoked after a sync
-            if (!PhotonNetwork.connected) {
-                StartTurn();
-            }
-
-            if (Hand) {
-                Hand.SetActive(false);
-            }
-        }
-    }
-
-    private void Victory(bool isWhite) {
-        winTime = Time.time;
-
-        if (isWhite)
-            Alert("White player has won!");
-        else
-            Alert("Black player has won!");
-
-        gameIsOver = true;
     }
 
     private void GenerateBoard() {
@@ -500,13 +621,17 @@ public class Board : Photon.PunBehaviour {
     }
 
     public void HandleSetTileAlliance(int alliance, int x, int y) {
-        PhotonView photonView = PhotonView.Get(this);
-        photonView.RPC("PunHandleSetTileAlliance", PhotonTargets.All, alliance, x, y);
+        if (PhotonNetwork.connected) {
+            PhotonView photonView = PhotonView.Get(this);
+            photonView.RPC("PunHandleSetTileAlliance", PhotonTargets.All, alliance, x, y);
+        } else {
+            PunHandleSetTileAlliance(alliance, x, y);
+        }
     }
 
     [PunRPC]
     public void PunHandleSetTileAlliance(int alliance, int x, int y) {
-        Debug.Log("PunHandleSetTileAlliance : " + alliance + "," + x + "," + y);
+        //Debug.Log("PunHandleSetTileAlliance : " + alliance + "," + x + "," + y);
         if (x == -1 || y == -1) {
             return;
         }
@@ -517,8 +642,7 @@ public class Board : Photon.PunBehaviour {
                 if (cube.Alliance != -1) {
                     Score[cube.Alliance]--;
                     Score[alliance]++;
-                }
-                else {
+                } else {
                     Score[alliance]++;
                 }
                 Debug.Log("cube.SetAlliance called");
@@ -567,19 +691,6 @@ public class Board : Photon.PunBehaviour {
         }
     }
 
-    private bool CheckVictory() {
-        return false;
-        // Something wrong in this code:
-        for (int i = 0; i < Score.Length; i++) {
-            if (Score[i] / MaxScore >= WinScoreThreshold) {
-                //client.Send("CPLAYERWON|" + i);
-                return true;
-            }
-        }
-
-        return true;
-    }
-
     // setup our OnEvent as callback:
     void OnEnable() {
         Debug.Log("Board OnEnable triggered");
@@ -612,17 +723,6 @@ public class Board : Photon.PunBehaviour {
         i.text = message;
     }
 
-    public void SendChatMessage() {
-        InputField i = GameObject.Find("MessageInput").GetComponent<InputField>();
-
-        if (i.text == "")
-            return;
-
-        client.Send("CMSG|" + i.text);
-
-        i.text = "";
-    }
-
     public string SyncTiles() {
         StringBuilder sb = new StringBuilder();
 
@@ -635,8 +735,7 @@ public class Board : Photon.PunBehaviour {
                             sb.Append(cube.ToString() + '+');
                         }
                     }
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
                     Debug.Log("SyncTiles: (" + i + "," + j + ") " + e.Message);
                 }
             }
@@ -682,6 +781,23 @@ public class Board : Photon.PunBehaviour {
         }
     }
 
+    public void OnDiskReleased(Disk disk) {
+        Debug.Log("OnDiskReleased");
+        currentlyReleasedDisk = disk;
+
+        if (disk.Alliance == (isHost ? 1 : 0) || isTutorial) {
+            // This is the player that played the move
+            // He should end the turn
+            _diskIdleTriggered = false;
+            Invoke("OnDisksIdle", 3);
+            OnDisksIdleTrigger();
+        }
+    }
+
+    internal void OnDiskClick(Disk disk) {
+        isZoomedIn = false;
+        isZoomedOut = true;
+    }
 
     public void SyncDiscsLocationRecieved(string clientId, string data) {
         // x,z=id+
@@ -702,6 +818,10 @@ public class Board : Photon.PunBehaviour {
                 disk.transform.position = new Vector3(x, transform.position.y, z);
             }
         }
+    }
+
+    public int Clamp(int value, int min, int max) {
+        return (value < min) ? min : (value > max) ? max : value;
     }
 
 }

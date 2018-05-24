@@ -47,6 +47,6 @@ public class Granade : MonoBehaviour {
                 rb.AddForce(transform.position.x - rb.transform.position.x, 0f, transform.position.z - rb.transform.position.z);
             }
         }
-        Destroy(gameObject);
+        //Destroy(gameObject);
     }
 }
