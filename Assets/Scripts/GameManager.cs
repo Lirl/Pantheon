@@ -81,8 +81,14 @@ public class GameManager : Photon.PunBehaviour {
         // UI Setup
         Debug.Log("GameManager Init");
 
+        mainMenu = GameObject.Find("MainMenu");
+        serverMenu = GameObject.Find("Host");
+        connectMenu = GameObject.Find("Connect");
+
         serverMenu.SetActive(false);
         connectMenu.SetActive(false);
+
+
 
         Debug.Log("serverMenu " + serverMenu);
     }
@@ -220,6 +226,18 @@ public class GameManager : Photon.PunBehaviour {
         SceneManager.LoadScene("Main");
     }
 
+    public void OnLevelWasLoaded() {
+        Debug.Log("OnLevelWasLoaded ");
+        mainMenu = GameObject.Find("MainMenu");
+        serverMenu = GameObject.Find("Host");
+        connectMenu = GameObject.Find("Connect");
+
+        serverMenu.SetActive(false);
+        connectMenu.SetActive(false);
+
+        var hotseat = GameObject.Find("HotSeat");
+        hotseat.GetComponent<Button>().onClick.AddListener(HotseatButton);
+    }
 
     public void SaveProgress() {
         user.Save();
