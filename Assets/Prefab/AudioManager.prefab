@@ -99,11 +99,26 @@ MonoBehaviour:
     src: {fileID: 0}
   - name: White Button
     clip: {fileID: 8300000, guid: e44f9a57adcab264bbf9973697460058, type: 3}
-    volume: 0
-    pitch: 0
+    volume: 1
+    pitch: 0.47
     src: {fileID: 0}
   - name: Level
     clip: {fileID: 8300000, guid: 233d9878fe49fd1499787298457f9929, type: 3}
     volume: 0
     pitch: 0
+    src: {fileID: 0}
+  - name: Disk Hit
+    clip: {fileID: 8300000, guid: d20b950311e9db84f8d4218fa67ee0bb, type: 3}
+    volume: 1
+    pitch: 1
+    src: {fileID: 0}
+  - name: Wall Hit
+    clip: {fileID: 8300000, guid: be3ffef4736d2364c8809b70b2e80875, type: 3}
+    volume: 1
+    pitch: 0.65
+    src: {fileID: 0}
+  - name: PowerUp
+    clip: {fileID: 8300000, guid: 093914475c65a544e86ffd059c53b845, type: 3}
+    volume: 1
+    pitch: 0.53
     src: {fileID: 0}

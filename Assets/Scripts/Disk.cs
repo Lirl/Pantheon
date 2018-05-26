@@ -17,6 +17,8 @@ public class Disk : Photon.PunBehaviour {
     public Slider HealthBar;
     public float HeightOffSet;
 
+    public AudioManager AudioManager;
+
     LineRenderer line;
     public SpringJoint SJ;
     public MeshRenderer mesh;
@@ -52,6 +54,7 @@ public class Disk : Photon.PunBehaviour {
     }
 
     public void Init(int alliance) {
+        AudioManager = GameObject.FindObjectOfType<AudioManager>();
         if (PhotonNetwork.connected && PhotonNetwork.inRoom) {
             PhotonView photonView = PhotonView.Get(this);
             photonView.RPC("PunInit", PhotonTargets.All, alliance);
@@ -242,6 +245,11 @@ public class Disk : Photon.PunBehaviour {
     private void OnCollisionEnter(Collision collision) {
 
         var disk = collision.gameObject.GetComponent<Disk>();
+        if (!disk) {
+            AudioManager.Play("Wall Hit");
+        } else {
+            AudioManager.Play("Disk Hit");
+        }
         if (!Board.Instance.isYourTurn || !disk) {
             return;
         }
