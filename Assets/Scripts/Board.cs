@@ -143,17 +143,17 @@ public class Board : Photon.PunBehaviour {
         }
 
         Invoke("CheckWinner", gameTime);
-
+        Invoke("TurnDownTheLights", 60f);
         if (isTutorial) {
             StartTurnTutorial();
             Invoke("MovePillars", 4f);
-            Invoke("TurnDownTheLights", 60f);
+            Invoke("CreatePowerUp", 5f);
         } else if (isHost) {
             // Host starts
             StartTurn();
             Invoke("CreatePowerUp", 20f);
             Invoke("MovePillars", 4f);
-            Invoke("TurnDownTheLights", 60f);
+
         }
     }
 
@@ -249,7 +249,7 @@ public class Board : Photon.PunBehaviour {
             Debug.Log("OnDiskCreated TurnCounter : " + TurnCounter);
             if (TurnCounter == 1) {
                 Debug.Log("is first turn in tutorial");
-                Instantiate(Resources.Load("Tutorial/SwipeIndicator"), ins.gameObject.transform.position + new Vector3(0, 5, 0), Quaternion.identity);
+                //Instantiate(Resources.Load("Tutorial/SwipeIndicator"), ins.gameObject.transform.position + new Vector3(0, 5, 0), Quaternion.identity);
             }
         }
     }
@@ -629,7 +629,7 @@ public class Board : Photon.PunBehaviour {
                 Invoke("CreatePowerUp", 20f);
             }
 
-            //Instantiate(powerUp[UnityEngine.Random.Range(0, powerUp.Length)], location + new Vector3(0, 1.4f,0), Quaternion.identity);
+            //Instantiate(runeScript[UnityEngine.Random.Range(0, powerUpsAmount)], location + new Vector3(0, 1.4f,0), Quaternion.identity);
             return rune;
         }
         return null;

@@ -8,15 +8,16 @@ public class MovePillars : Photon.PunBehaviour {
     public bool reachedCloseSide = false;
     public float offset = 0.1f;
     public float zPos;
+    private bool move = false;
 
     // Use this for initialization
     void Start() {
-
+        Invoke("StartMoving", 30f);
     }
 
     // Update is called once per frame
     void Update() {
-        if ((Board.Instance.isHost || Board.Instance.isTutorial) && Board.Instance.isPillarsMoving) {
+        if (move) {
             if (transform.position.z <= zPos && !reachedFarSide) {
                 transform.position += new Vector3(0, 0, offset * Time.deltaTime);
             }
@@ -36,5 +37,9 @@ public class MovePillars : Photon.PunBehaviour {
 
     public void MoveUp() {
         offset *= -1;
+    }
+
+    public void StartMoving() {
+        move = true;
     }
 }
