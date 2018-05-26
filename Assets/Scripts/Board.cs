@@ -23,6 +23,79 @@ public class Board : Photon.PunBehaviour {
     public const int MAP_WIDTH_REAL = 20;
     public const int MAP_HEIGHT_REAL = 30;
 
+    internal void StartGame() {
+        TimeSlider.maxValue = TurnTime;
+
+        // UI Setop
+        Hand = GameObject.Find("Hand");
+        TimeMessage = GameObject.Find("TimeMessage") as GameObject;
+
+        alertCanvas = GameObject.Find("AlertText").GetComponent<CanvasGroup>();
+        yourScore = GameObject.Find("YourScore");
+        opponentScore = GameObject.Find("OpponentScore");
+
+        WinMessage.SetActive(false);
+        LoseMessage.SetActive(false);
+        BackToMenu.SetActive(false);
+
+
+        // Check player connectivity
+        if (PhotonNetwork.connected && PhotonNetwork.inRoom) {
+            isHost = GameManager.Instance.isHost;
+        } else {
+            isHost = true;
+        }
+
+        // The only way this condition will suffies
+        // is when the user has entered his first game, which loads this scene without being
+        // connected to a room
+        if (!PhotonNetwork.inRoom) {
+            isTutorial = true;
+        }
+
+        Alert(isHost ? "I am Host" : "I am Client");
+
+        yourScore.GetComponentInChildren<Text>().color = isHost ? Color.blue : Color.red;
+        yourColor = yourScore.GetComponentInChildren<Text>().color;
+        yourScore.GetComponentInChildren<Text>().text = "0";
+        opponentScore.GetComponentInChildren<Text>().color = isHost ? Color.red : Color.blue;
+        opponentColor = opponentScore.GetComponentInChildren<Text>().color;
+        opponentScore.GetComponentInChildren<Text>().text = "0";
+
+        // Client player has its camera rotate 180 degrees
+        if (!isHost) {
+            Camera.main.transform.rotation = Quaternion.Euler(90, 180, 0);
+        }
+
+        // Disable hand
+        if (Hand) {
+            Hand.SetActive(false);
+        }
+
+        TurnTime = 8;
+        TurnCounter = 1;
+
+        for (int i = 0; i < 2; i++) {
+            DrawCard();
+        }
+
+        Invoke("CheckWinner", gameTime);
+        Invoke("TurnDownTheLights", 60f);
+        if (isTutorial) {
+            StartTurnTutorial();
+            Invoke("MovePillars", 4f);
+            Invoke("CreatePowerUp", 5f);
+        } else if (isHost) {
+            // Host starts
+            StartTurn();
+            Invoke("CreatePowerUp", 20f);
+            Invoke("MovePillars", 4f);
+
+        }
+
+        started = true;
+    }
+
     public int powerUpsAmount = 2;
     public GameObject[,] Tiles = new GameObject[MAP_WIDTH_REAL, MAP_HEIGHT_REAL];
     public int[] Score = new int[2]; // Score[0] <= Host. Score[1] <= Client
@@ -82,79 +155,11 @@ public class Board : Photon.PunBehaviour {
     internal bool isPillarsMoving = false;
     internal bool isLightsOn = false;
     private GameObject _lastCreatedDisk;
+    private bool started;
 
     private void Start() {
         Instance = this;
-        TimeSlider.maxValue = TurnTime;
-
-        // UI Setop
-        Hand = GameObject.Find("Hand");
-        TimeMessage = GameObject.Find("TimeMessage") as GameObject;
-
-        alertCanvas = GameObject.Find("AlertText").GetComponent<CanvasGroup>();
-        yourScore = GameObject.Find("YourScore");
-        opponentScore = GameObject.Find("OpponentScore");
-
-        WinMessage.SetActive(false);
-        LoseMessage.SetActive(false);
-        BackToMenu.SetActive(false);
-
-
-        // Check player connectivity
-        if (PhotonNetwork.connected && PhotonNetwork.inRoom) {
-            isHost = GameManager.Instance.isHost;
-        } else {
-            isHost = true;
-        }
-
-        // The only way this condition will suffies
-        // is when the user has entered his first game, which loads this scene without being
-        // connected to a room
-        if (!PhotonNetwork.inRoom) {
-            isTutorial = true;
-        }
-
-        Alert(isHost ? "I am Host" : "I am Client");
-
-        yourScore.GetComponentInChildren<Text>().color = isHost ? Color.blue : Color.red;
-        yourColor = yourScore.GetComponentInChildren<Text>().color;
-        yourScore.GetComponentInChildren<Text>().text = "0";
-        opponentScore.GetComponentInChildren<Text>().color = isHost ? Color.red : Color.blue;
-        opponentColor = opponentScore.GetComponentInChildren<Text>().color;
-        opponentScore.GetComponentInChildren<Text>().text = "0";
-
-        // Client player has its camera rotate 180 degrees
-        if (!isHost) {
-            Camera.main.transform.rotation = Quaternion.Euler(90, 180, 0);
-        }
-
         GenerateBoard();
-
-        // Disable hand
-        if (Hand) {
-            Hand.SetActive(false);
-        }
-
-        TurnTime = 8;
-        TurnCounter = 1;
-        
-        for (int i = 0; i < 2; i++) {
-            DrawCard();
-        }
-
-        Invoke("CheckWinner", gameTime);
-        Invoke("TurnDownTheLights", 60f);
-        if (isTutorial) {
-            StartTurnTutorial();
-            Invoke("MovePillars", 4f);
-            Invoke("CreatePowerUp", 5f);
-        } else if (isHost) {
-            // Host starts
-            StartTurn();
-            Invoke("CreatePowerUp", 20f);
-            Invoke("MovePillars", 4f);
-
-        }
     }
 
     #region Disk Management
@@ -547,6 +552,10 @@ public class Board : Photon.PunBehaviour {
     #endregion
 
     private void Update() {
+
+        if(!started) {
+            return;
+        }
 
         gameTime -= Time.deltaTime;
         TimeSlider.value -= Time.deltaTime;
