@@ -50,7 +50,7 @@ public class Disk : Photon.PunBehaviour {
     }
 
     public void Init(int alliance) {
-        if (PhotonNetwork.connected) {
+        if (PhotonNetwork.connected && PhotonNetwork.inRoom) {
             PhotonView photonView = PhotonView.Get(this);
             photonView.RPC("PunInit", PhotonTargets.All, alliance);
         } else {
@@ -168,7 +168,7 @@ public class Disk : Photon.PunBehaviour {
         var pos = transform.position;
         transform.position = originalPosition;
 
-        if (PhotonNetwork.connected) {
+        if (PhotonNetwork.connected && PhotonNetwork.inRoom) {
             PhotonView photonView = PhotonView.Get(this);
             photonView.RPC("Release", PhotonTargets.All, pos);
         } else {
@@ -268,7 +268,7 @@ public class Disk : Photon.PunBehaviour {
 
     public void ForceSyncPosition() {
         if (Board.Instance.isYourTurn) {
-            if (PhotonNetwork.connected) {
+            if (PhotonNetwork.connected && PhotonNetwork.inRoom) {
                 PhotonView photonView = PhotonView.Get(this);
                 photonView.RPC("PunForceSyncPosition", PhotonTargets.All, transform.position);
             }
@@ -281,7 +281,7 @@ public class Disk : Photon.PunBehaviour {
     }
 
     private void DealDamage(double dmg) {
-        if (PhotonNetwork.connected) {
+        if (PhotonNetwork.connected && PhotonNetwork.inRoom) {
             PhotonView photonView = PhotonView.Get(this);
             photonView.RPC("PunDealDamage", PhotonTargets.All, dmg);
         } else {
@@ -299,7 +299,7 @@ public class Disk : Photon.PunBehaviour {
     }
 
     internal void DestroyDisk() {
-        if (PhotonNetwork.connected) {
+        if (PhotonNetwork.connected && PhotonNetwork.inRoom) {
             if(photonView.isMine) {
                 PhotonNetwork.Destroy(photonView);
             }

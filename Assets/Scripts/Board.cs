@@ -95,7 +95,7 @@ public class Board : Photon.PunBehaviour {
 
 
         // Check player connectivity
-        if (PhotonNetwork.connected) {
+        if (PhotonNetwork.connected && PhotonNetwork.inRoom) {
             isHost = GameManager.Instance.isHost;
         } else {
             isHost = true;
@@ -174,7 +174,7 @@ public class Board : Photon.PunBehaviour {
         var offset = (code == 3 ? 7f : 3f);
 
         GameObject ins;
-        if (PhotonNetwork.connected) {
+        if (PhotonNetwork.connected && PhotonNetwork.inRoom) {
             ins = PhotonNetwork.Instantiate("Characters/Character" + code, hook.transform.position + new Vector3(0, 3f, 0), Quaternion.identity, 0);
         } else {
             ins = Instantiate(prefab, new Vector3(hook.transform.position.x, hook.transform.position.y + 1.5f, hook.transform.position.z), Quaternion.identity);
@@ -187,7 +187,15 @@ public class Board : Photon.PunBehaviour {
             Hand.SetActive(false);
         }
 
+        OnDiskCreated(ins);
+
         return ins;
+    }
+
+    private void OnDiskCreated(GameObject ins) {
+        if (TurnCounter == 1) {
+            
+        }
     }
 
     public GameObject GetHook(int alliance) {
@@ -206,7 +214,7 @@ public class Board : Photon.PunBehaviour {
             hook = GameObject.Find("ClientHook");
         }
         GameObject ins;
-        if(PhotonNetwork.connected) {
+        if(PhotonNetwork.connected && PhotonNetwork.inRoom) {
              ins = PhotonNetwork.Instantiate(DummyDisk.name, hook.transform.position, Quaternion.identity, 0);
         } else {
             ins = Instantiate(DummyDisk, hook.transform.position, Quaternion.identity);
@@ -330,7 +338,7 @@ public class Board : Photon.PunBehaviour {
         /*Vector3 aim = (enemies[0].transform.position - hook.transform.position).normalized;
         AIAimDiskPosition = hook.transform.position + (aim * -40);*/
 
-        AIAimDiskPosition = new Vector3(AILastCreatedDisk.transform.position.x + UnityEngine.Random.Range(-20.0f, 20.0f), AILastCreatedDisk.transform.position.y, AILastCreatedDisk.transform.position.z + UnityEngine.Random.Range(10.0f, 30.0f));
+        AIAimDiskPosition = new Vector3(AILastCreatedDisk.transform.position.x + UnityEngine.Random.Range(-15.0f, 15.0f), AILastCreatedDisk.transform.position.y, AILastCreatedDisk.transform.position.z + UnityEngine.Random.Range(10.0f, 20.0f));
 
         // So SpringJoint will not drag it out off aiming position
         AILastCreatedDisk.GetComponent<Rigidbody>().isKinematic = true;
@@ -456,7 +464,7 @@ public class Board : Photon.PunBehaviour {
                 Hand.SetActive(false);
             }
 
-            if (PhotonNetwork.connected) {
+            if (PhotonNetwork.connected && PhotonNetwork.inRoom) {
                 PhotonNetwork.RaiseEvent(0, GetTilesAsString(), true, null);
             } else {
                 isHost = !isHost;
@@ -476,6 +484,10 @@ public class Board : Photon.PunBehaviour {
     }
 
     public void CheckWinner() {
+        if(isTutorial) {
+            isHost = true;
+        }
+
         Debug.Log("CheckWinner");
         if (Score[0] >= Score[1]) {
             HandleShowWinner(0);
@@ -529,7 +541,7 @@ public class Board : Photon.PunBehaviour {
 
 
         if (isZoomedIn) {
-            if (Camera.main.orthographicSize >= 45) {
+            if (Camera.main.orthographicSize >= 52) {
                 Camera.main.orthographicSize -= 0.5f;
             } else {
                 isZoomedIn = false;
@@ -556,7 +568,7 @@ public class Board : Photon.PunBehaviour {
         int y = UnityEngine.Random.Range(1, MAP_HEIGHT_REAL - 1);
         int code = UnityEngine.Random.Range(0, powerUpsAmount);
 
-        if (PhotonNetwork.connected) {
+        if (PhotonNetwork.connected && PhotonNetwork.inRoom) {
             photonView.RPC("PunHandleCreatePowerUp", PhotonTargets.All, code, x, y);
         } else {
             PunHandleCreatePowerUp(code, x, y);
@@ -568,7 +580,7 @@ public class Board : Photon.PunBehaviour {
         var toInstantiate = Resources.Load("Characters/PowerUps" + code) as GameObject;
         if (Tiles[x, y] && toInstantiate) {
             GameObject rune;
-            if (PhotonNetwork.connected) {
+            if (PhotonNetwork.connected && PhotonNetwork.inRoom) {
                 rune = PhotonNetwork.Instantiate("Characters/PowerUps" + code, Tiles[x, y].transform.position + new Vector3(0, 2f, 0), Quaternion.Euler(new Vector3(45, 45, 45)), 0);
             } else {
                 rune = Instantiate(toInstantiate, Tiles[x, y].transform.position + new Vector3(0, 2f, 0), Quaternion.Euler(new Vector3(45, 45, 45)));
@@ -657,7 +669,7 @@ public class Board : Photon.PunBehaviour {
             return;
         }
 
-        if (PhotonNetwork.connected) {
+        if (PhotonNetwork.connected && PhotonNetwork.inRoom) {
             PhotonView photonView = PhotonView.Get(this);
             photonView.RPC("PunHandleSetTileAlliance", PhotonTargets.All, alliance, x, y);
         } else {

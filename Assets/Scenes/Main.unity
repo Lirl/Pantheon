@@ -455,6 +455,14 @@ Prefab:
       propertyPath: m_LocalScale.z
       value: 0.2
       objectReference: {fileID: 0}
+    - target: {fileID: 4635570987270408, guid: 52320a038bdba594ea0746324b269732, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4881191529097060, guid: 52320a038bdba594ea0746324b269732, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 52320a038bdba594ea0746324b269732, type: 2}
   m_IsPrefabParent: 0
@@ -1709,7 +1717,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.31978342, y: 0.44667983}
   m_AnchorMax: {x: 0.68200004, y: 0.8295614}
-  m_AnchoredPosition: {x: -0.000030517578, y: -27.87201}
+  m_AnchoredPosition: {x: -0.000061035156, y: -27.87201}
   m_SizeDelta: {x: 0, y: 260.27}
   m_Pivot: {x: 0.49999997, y: 0.5}
 --- !u!1001 &677427127
@@ -2217,7 +2225,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Button
+  m_Text: Back to menu
 --- !u!222 &1111541883
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -2242,7 +2250,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1142929166
 RectTransform:
   m_ObjectHideFlags: 0
@@ -4286,7 +4294,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &2047301197
 RectTransform:
   m_ObjectHideFlags: 0
@@ -4324,6 +4332,7 @@ GameObject:
   - component: {fileID: 2087980912}
   - component: {fileID: 2087980918}
   - component: {fileID: 2087980917}
+  - component: {fileID: 2087980919}
   m_Layer: 0
   m_Name: BaseField
   m_TagString: Untagged
@@ -4434,10 +4443,11 @@ MonoBehaviour:
   Score: 0000000000000000
   chatMessageContainer: {fileID: 0}
   messagePrefab: {fileID: 0}
-  highlightsContainer: {fileID: 0}
   DummyDisk: {fileID: 1777335380910966, guid: 3442a6a8333701c4ebfbe30b78736baf, type: 2}
   alertCanvas: {fileID: 0}
   gameTime: 90
+  isYourTurn: 0
+  DisksList: []
   TurnCounter: 0
   Deck: 
   boardOffset: {x: 29, y: 0, z: 44}
@@ -4445,12 +4455,10 @@ MonoBehaviour:
   WinMessage: {fileID: 1142929165}
   LoseMessage: {fileID: 2047301196}
   BackToMenu: {fileID: 2104910348}
-  isYourTurn: 0
-  MessageBox: {fileID: 0}
-  CurrentCharacter:
-  - {fileID: 0}
-  - {fileID: 0}
-  SyncTilesString: 
+  isTutorial: 0
+  AILastCreatedDisk: {fileID: 0}
+  AIAimDiskPositionChosen: 0
+  AIAimDiskPosition: {x: 0, y: 0, z: 0}
 --- !u!156049354 &2087980918
 Grid:
   m_ObjectHideFlags: 0
@@ -4462,6 +4470,32 @@ Grid:
   m_CellGap: {x: 0, y: 0, z: 0}
   m_CellLayout: 0
   m_CellSwizzle: 1
+--- !u!114 &2087980919
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 2087980911}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa584fbee541324448dd18d8409c7a41, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ownerId: 0
+  group: 0
+  OwnerShipWasTransfered: 0
+  prefixBackup: -1
+  synchronization: 0
+  onSerializeTransformOption: 3
+  onSerializeRigidBodyOption: 2
+  ownershipTransfer: 0
+  ObservedComponents:
+  - {fileID: 0}
+  ObservedComponentsFoldoutOpen: 1
+  viewIdField: 2
+  instantiationId: 2
+  currentMasterID: -1
+  isRuntimeInstantiated: 0
 --- !u!1 &2104910348
 GameObject:
   m_ObjectHideFlags: 0
@@ -4479,7 +4513,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &2104910349
 RectTransform:
   m_ObjectHideFlags: 0

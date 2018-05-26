@@ -16,9 +16,15 @@ public class ChangeScene : MonoBehaviour {
 		
 	}
 
-     public void LoadMenu () {
+     public void LoadMenu() {
         Application.LoadLevel("menu");
     }
+
+    public void LoadMain() {
+        //Application.LoadLevel("menu");
+        Application.LoadLevel("Main");
+    }
+
 
     public void LoadSceneByName(string scene) {
         Application.LoadLevel(scene);
@@ -33,7 +39,7 @@ public class ChangeScene : MonoBehaviour {
             Debug.Log("No Name");
         } else {
             //May be changed to LoadSceneByName later
-            LoadMenu();
+            LoadMain();
         }
     }
 }
