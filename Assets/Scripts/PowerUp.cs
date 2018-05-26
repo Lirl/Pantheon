@@ -16,6 +16,9 @@ public class PowerUp : MonoBehaviour {
         if (!collided) {
             return;
         }
+        if (!collided._released) {
+            return;
+        }
         Instantiate(effect, transform.position + new Vector3(0, 2, 0), Quaternion.identity);
         var alliance = collided.Alliance;
         //Create a plus

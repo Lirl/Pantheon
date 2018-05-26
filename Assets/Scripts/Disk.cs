@@ -34,7 +34,7 @@ public class Disk : Photon.PunBehaviour {
 
     private static int _idCounter = 0;
     private bool enlarge = false;
-    private bool _released = false;
+    public bool _released = false;
     private bool inField = false;
     private bool outOfBounds = false;
 
