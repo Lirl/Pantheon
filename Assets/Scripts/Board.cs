@@ -129,6 +129,8 @@ public class Board : Photon.PunBehaviour {
             Hand.SetActive(false);
         }
 
+        TurnCounter = 1;
+
         for (int i = 0; i < 2; i++) {
             DrawCard();
         }
@@ -192,20 +194,6 @@ public class Board : Photon.PunBehaviour {
         return ins;
     }
 
-    private void OnDiskCreated(GameObject ins) {
-        if (TurnCounter == 1) {
-            
-        }
-    }
-
-    public GameObject GetHook(int alliance) {
-        if (alliance == 1) {
-            return GameObject.Find("HostHook");
-        } else {
-            return GameObject.Find("ClientHook");
-        }
-    }
-
     internal GameObject CreateDisk(int alliance) {
         GameObject hook;
         if (alliance == 1) {
@@ -240,6 +228,25 @@ public class Board : Photon.PunBehaviour {
         var ins = PhotonNetwork.Instantiate(go.name, position, Quaternion.identity, 0);
         ins.GetComponent<SpringJoint>().connectedAnchor = new Vector3(0, 1.9f, 0);
         return ins;
+    }
+
+
+    private void OnDiskCreated(GameObject ins) {
+        if (isTutorial) {
+            Debug.Log("OnDiskCreated TurnCounter : " + TurnCounter);
+            if (TurnCounter == 1) {
+                Debug.Log("is first turn in tutorial");
+                Instantiate(Resources.Load("Tutorial/SwipeIndicator"), ins.gameObject.transform.position + new Vector3(0, 5, 0), Quaternion.identity);
+            }
+        }
+    }
+
+    public GameObject GetHook(int alliance) {
+        if (alliance == 1) {
+            return GameObject.Find("HostHook");
+        } else {
+            return GameObject.Find("ClientHook");
+        }
     }
 
     public void OnDisksIdleTrigger() {
