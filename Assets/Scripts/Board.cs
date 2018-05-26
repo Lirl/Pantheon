@@ -38,7 +38,9 @@ public class Board : Photon.PunBehaviour {
     private float lastAlert;
     private bool alertActive;
 
-
+    public Slider TimeSlider;
+    public Image Fill;
+    public float TurnTime = 5;
     private bool gameIsOver;
     public float gameTime = 10f;
 
@@ -80,6 +82,8 @@ public class Board : Photon.PunBehaviour {
 
     private void Start() {
         Instance = this;
+        TimeSlider.maxValue = TurnTime;
+        TimeSlider.value = TurnTime;
 
         // UI Setop
         Hand = GameObject.Find("Hand");
@@ -104,7 +108,7 @@ public class Board : Photon.PunBehaviour {
         // The only way this condition will suffies
         // is when the user has entered his first game, which loads this scene without being
         // connected to a room
-        if(!PhotonNetwork.inRoom) {
+        if (!PhotonNetwork.inRoom) {
             isTutorial = true;
         }
 
@@ -202,12 +206,12 @@ public class Board : Photon.PunBehaviour {
             hook = GameObject.Find("ClientHook");
         }
         GameObject ins;
-        if(PhotonNetwork.connected && PhotonNetwork.inRoom) {
-             ins = PhotonNetwork.Instantiate(DummyDisk.name, hook.transform.position, Quaternion.identity, 0);
+        if (PhotonNetwork.connected && PhotonNetwork.inRoom) {
+            ins = PhotonNetwork.Instantiate(DummyDisk.name, hook.transform.position, Quaternion.identity, 0);
         } else {
             ins = Instantiate(DummyDisk, hook.transform.position, Quaternion.identity);
         }
-        
+
         ins.GetComponent<Disk>().Init(alliance);
 
         // Handle UI
@@ -252,12 +256,12 @@ public class Board : Photon.PunBehaviour {
     public void OnDisksIdleTrigger() {
         var pos = new Vector3(0, 0, 0);
         try {
-            for(int i = 0; i < DisksList.Count; i++) {
+            for (int i = 0; i < DisksList.Count; i++) {
                 if (DisksList[i]) {
                     pos += DisksList[i].gameObject.GetComponent<Rigidbody>().velocity;
                 }
             }
-        } catch(Exception e) {
+        } catch (Exception e) {
             Debug.Log("Exception : " + e.Message);
         }
 
@@ -282,9 +286,9 @@ public class Board : Photon.PunBehaviour {
 
     public void OnDisksIdle() {
         Debug.Log("OnDisksIdle");
-        if(!_diskIdleTriggered) {
+        if (!_diskIdleTriggered) {
             _diskIdleTriggered = true;
-            if(isTutorial) {
+            if (isTutorial) {
                 EndTurnTutorial();
             } else {
                 EndTurn();
@@ -315,9 +319,9 @@ public class Board : Photon.PunBehaviour {
     public int GetAICardCode() {
 
         //TODO: continue here
-        switch(TurnCounter) {
+        switch (TurnCounter) {
             case 2:
-                
+
                 // First move by the player, summon a priest
                 return 3; // groot
 
@@ -356,7 +360,7 @@ public class Board : Photon.PunBehaviour {
 
     // Triggered in update when AIAimDiskPositionChosen == true
     public void HandleAIAiming() {
-        if(!isTutorial || !AIAimDiskPositionChosen) {
+        if (!isTutorial || !AIAimDiskPositionChosen) {
             return;
         }
 
@@ -382,6 +386,7 @@ public class Board : Photon.PunBehaviour {
         if (gameIsOver) {
             return;
         }
+        TimeSlider.value = TurnTime;
 
         // Human Player
         if (isHost) {
@@ -440,12 +445,12 @@ public class Board : Photon.PunBehaviour {
 
         // 10 seconds turn
         // TODO: add end turn indication
-        //Invoke("EndTurn", 10);
-        
+        Debug.Log("Invoke EndTurn " + (isYourTurn ? "your turn" : "not your turn"));
+        Invoke("EndTurn", TurnTime);
         if (Hand) {
             Hand.SetActive(true);
         }
-        
+
         isZoomedOut = true;
     }
 
@@ -491,7 +496,7 @@ public class Board : Photon.PunBehaviour {
     }
 
     public void CheckWinner() {
-        if(isTutorial) {
+        if (isTutorial) {
             isHost = true;
         }
 
@@ -523,6 +528,8 @@ public class Board : Photon.PunBehaviour {
     private void Update() {
 
         gameTime -= Time.deltaTime;
+        TimeSlider.value -= Time.deltaTime;
+
         if (gameTime >= 0 && !gameIsOver) {
             TimeMessage.GetComponentInChildren<Text>().text = Math.Floor(gameTime).ToString();
         }
@@ -755,6 +762,8 @@ public class Board : Photon.PunBehaviour {
     // handle custom events:
     void OnEvent(byte eventcode, object content, int senderid) {
         TurnCounter++;
+
+        TimeSlider.value = TurnTime;
         Debug.Log("OnEvent Triggered " + eventcode + " , " + content);
         if (eventcode == 0 && !isYourTurn) {
             Debug.Log("OnEvent Triggered " + eventcode + " , " + content);
