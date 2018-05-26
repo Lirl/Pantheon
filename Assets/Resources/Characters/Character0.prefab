@@ -97,7 +97,7 @@ GameObject:
   m_Component:
   - component: {fileID: 224896739028371374}
   - component: {fileID: 114800578437855664}
-  - component: {fileID: 114211619652347466}
+  - component: {fileID: 114162051722052224}
   m_Layer: 5
   m_Name: Slider
   m_TagString: Untagged
@@ -297,6 +297,18 @@ TrailRenderer:
     generateLightingData: 0
   m_MinVertexDistance: 0.1
   m_Autodestruct: 0
+--- !u!114 &114162051722052224
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1557149332784986}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 732ff036adbc2184195aa76326086b23, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  character: {fileID: 1126242136879744}
 --- !u!114 &114207915312391724
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -390,18 +402,6 @@ MonoBehaviour:
     InterpolateOption: 0
     InterpolateMoveTowardsSpeed: 1
     InterpolateLerpSpeed: 0
---- !u!114 &114211619652347466
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1557149332784986}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 61052836564279f4c951dd90bda99626, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  character: {fileID: 1126242136879744}
 --- !u!114 &114269502762721044
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -522,6 +522,7 @@ MonoBehaviour:
   cameraAdjuster: 0.5
   endTurn: 1
   HealthBar: {fileID: 114800578437855664}
+  HeightOffSet: 0
   SJ: {fileID: 0}
   mesh: {fileID: 0}
   Alliance: 0
@@ -531,7 +532,8 @@ MonoBehaviour:
   Id: 0
   classType: 0
   Enable: 1
-  health: {fileID: 0}
+  _released: 0
+  _forcedRelease: 0
 --- !u!114 &114952946395350144
 MonoBehaviour:
   m_ObjectHideFlags: 1

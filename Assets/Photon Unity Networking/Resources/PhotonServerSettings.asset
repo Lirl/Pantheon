@@ -36,4 +36,18 @@ MonoBehaviour:
   - PunRespawn
   - RequestForPickupItems
   - RequestForPickupTimes
+  - ColorRpc
+  - DoJump
+  - Flash
+  - Marco
+  - Polo
+  - PunDealDamage
+  - PunForceSyncPosition
+  - PunHandleCreatePowerUp
+  - PunHandleSetTileAlliance
+  - PunInit
+  - PunReleaseOnTurnEnd
+  - Release
+  - TaggedPlayer
+  - PunResetTurnSlider
   DisableAutoOpenWizard: 1

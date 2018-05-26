@@ -17,7 +17,7 @@ public class ChangeScene : MonoBehaviour {
 	}
 
      public void LoadMenu() {
-        Application.LoadLevel("menu");
+        Application.LoadLevel("Menu");
     }
 
     public void LoadMain() {

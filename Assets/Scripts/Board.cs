@@ -40,7 +40,7 @@ public class Board : Photon.PunBehaviour {
 
     public Slider TimeSlider;
     public Image Fill;
-    public float TurnTime = 5;
+    public float TurnTime = 8;
     private bool gameIsOver;
     public float gameTime = 10f;
 
@@ -81,11 +81,11 @@ public class Board : Photon.PunBehaviour {
     private Color opponentColor;
     internal bool isPillarsMoving = false;
     internal bool isLightsOn = false;
+    private GameObject _lastCreatedDisk;
 
     private void Start() {
         Instance = this;
         TimeSlider.maxValue = TurnTime;
-        TimeSlider.value = TurnTime;
 
         // UI Setop
         Hand = GameObject.Find("Hand");
@@ -135,8 +135,9 @@ public class Board : Photon.PunBehaviour {
             Hand.SetActive(false);
         }
 
+        TurnTime = 8;
         TurnCounter = 1;
-
+        
         for (int i = 0; i < 2; i++) {
             DrawCard();
         }
@@ -174,7 +175,9 @@ public class Board : Photon.PunBehaviour {
             Hand.SetActive(false);
         }
 
-        CreateDisk((isHost ? 1 : 0), code);
+        prevDiskIdleResult = new Vector3(-1, -1, -1);
+
+        _lastCreatedDisk = CreateDisk((isHost ? 1 : 0), code);
     }
 
     internal GameObject CreateDisk(int alliance, int code) {
@@ -441,6 +444,7 @@ public class Board : Photon.PunBehaviour {
 
         isYourTurn = true;
         TurnHasEnded = false;
+        _lastCreatedDisk = null;
 
         Alert("Player " + (isHost ? 1 : 2) + " turn #" + TurnCounter + " YourTurn: " + isYourTurn);
         Debug.Log("Player " + (isHost ? 1 : 2) + " turn #" + TurnCounter + " YourTurn: " + isYourTurn + " isHost: " + isHost);
@@ -452,12 +456,14 @@ public class Board : Photon.PunBehaviour {
         // 10 seconds turn
         // TODO: add end turn indication
         Debug.Log("Invoke EndTurn " + (isYourTurn ? "your turn" : "not your turn"));
-        Invoke("EndTurn", TurnTime);
+        Invoke("ForceEndTurn", TurnTime);
         if (Hand) {
             Hand.SetActive(true);
         }
 
         isZoomedOut = true;
+
+        ResetTurnSlider();
     }
 
     private void DrawCard() {
@@ -470,6 +476,15 @@ public class Board : Photon.PunBehaviour {
         Deck.RemoveAt(0);
 
         Card.CreateCard(code, Hand.transform);
+    }
+
+    public void ForceEndTurn() {
+        if (_lastCreatedDisk) {
+            _lastCreatedDisk.GetComponent<Disk>().ReleaseOnTurnEnd();
+        }
+        else {
+            EndTurn();
+        }
     }
 
     private void EndTurn() {
@@ -769,7 +784,6 @@ public class Board : Photon.PunBehaviour {
     void OnEvent(byte eventcode, object content, int senderid) {
         TurnCounter++;
 
-        TimeSlider.value = TurnTime;
         Debug.Log("OnEvent Triggered " + eventcode + " , " + content);
         if (eventcode == 0 && !isYourTurn) {
             Debug.Log("OnEvent Triggered " + eventcode + " , " + content);
@@ -880,5 +894,20 @@ public class Board : Photon.PunBehaviour {
 
     public void TurnDownTheLights() {
         isLightsOn = true;
+    }
+
+    private void ResetTurnSlider() {
+        if (PhotonNetwork.connected && PhotonNetwork.inRoom) {
+            photonView.RPC("PunResetTurnSlider", PhotonTargets.All);
+        }
+        else {
+            PunResetTurnSlider();
+        }
+    }
+
+    [PunRPC]
+    private void PunResetTurnSlider() {
+        Debug.Log("PunResetTurnSlider " + TurnTime + " is host: " + isHost);
+        TimeSlider.value = TurnTime;
     }
 }

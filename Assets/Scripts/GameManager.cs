@@ -229,7 +229,7 @@ public class GameManager : Photon.PunBehaviour {
     }
 
     public void OnLevelWasLoaded() {
-        Debug.Log("OnLevelWasLoaded ");
+        Debug.Log("OnLevelWasLoaded ");        
         mainMenu = GameObject.Find("MainMenu");
         serverMenu = GameObject.Find("Host");
         connectMenu = GameObject.Find("Connect");
@@ -239,6 +239,8 @@ public class GameManager : Photon.PunBehaviour {
 
         var hotseat = GameObject.Find("HotSeat");
         hotseat.GetComponent<Button>().onClick.AddListener(HotseatButton);
+        var Train = GameObject.Find("Train");
+        Train.GetComponent<Button>().onClick.AddListener(StartGame);
     }
 
     public void SaveProgress() {
