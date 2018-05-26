@@ -85,10 +85,12 @@ public class GameManager : Photon.PunBehaviour {
         serverMenu = GameObject.Find("Host");
         connectMenu = GameObject.Find("Connect");
 
-        serverMenu.SetActive(false);
-        connectMenu.SetActive(false);
-
-
+        if(serverMenu) {
+            serverMenu.SetActive(false);
+        }
+        if(connectMenu) {
+            connectMenu.SetActive(false);
+        }
 
         Debug.Log("serverMenu " + serverMenu);
     }

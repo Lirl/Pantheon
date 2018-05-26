@@ -36,12 +36,14 @@ public class BoardSync : Photon.PunBehaviour {
             stream.SendNext(_board.GetTilesAsString());
             stream.SendNext(_board.Score[0]);
             stream.SendNext(_board.Score[1]);
+
+            stream.SendNext(Board.Instance.TimeSlider.value);
         } else {
 
             _board.HandleSyncTiles((string)stream.ReceiveNext());
             _board.Score[0] = ((int)stream.ReceiveNext());
             _board.Score[1] = ((int)stream.ReceiveNext());
-
+            Board.Instance.TimeSlider.value = (float)stream.ReceiveNext();
         }
     }
 }

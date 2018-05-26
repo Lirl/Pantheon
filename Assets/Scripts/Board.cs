@@ -79,6 +79,8 @@ public class Board : Photon.PunBehaviour {
     private bool _diskIdleTriggered;
     private Color yourColor;
     private Color opponentColor;
+    internal bool isPillarsMoving = false;
+    internal bool isLightsOn = false;
 
     private void Start() {
         Instance = this;
@@ -143,10 +145,14 @@ public class Board : Photon.PunBehaviour {
 
         if (isTutorial) {
             StartTurnTutorial();
+            Invoke("MovePillars", 4f);
+            Invoke("TurnDownTheLights", 60f);
         } else if (isHost) {
             // Host starts
             StartTurn();
             Invoke("CreatePowerUp", 20f);
+            Invoke("MovePillars", 4f);
+            Invoke("TurnDownTheLights", 60f);
         }
     }
 
@@ -866,4 +872,13 @@ public class Board : Photon.PunBehaviour {
         return (value < min) ? min : (value > max) ? max : value;
     }
 
+
+    public void MovePillars() {
+        Debug.Log("Starting to move pillars");
+        isPillarsMoving = true;
+    }
+
+    public void TurnDownTheLights() {
+        isLightsOn = true;
+    }
 }

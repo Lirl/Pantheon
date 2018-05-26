@@ -38,6 +38,8 @@ public class Disk : Photon.PunBehaviour {
     private bool inField = false;
     private bool outOfBounds = false;
 
+    public bool _forcedRelease = false;
+
     public static int GenerateId() {
         _idCounter++;
         return _idCounter;
@@ -162,9 +164,6 @@ public class Disk : Photon.PunBehaviour {
             return;
         }
 
-        Enable = false;
-
-        isMouseDown = false;
         var pos = transform.position;
         transform.position = originalPosition;
 
@@ -176,9 +175,31 @@ public class Disk : Photon.PunBehaviour {
         }
     }
 
+    public void ReleaseOnTurnEnd() {
+        if(PhotonNetwork.connected) {
+            PhotonView photonView = PhotonView.Get(this);
+            photonView.RPC("PunReleaseOnTurnEnd", PhotonTargets.All);
+        } else {
+            PunReleaseOnTurnEnd();
+        }
+    }
+
+    [PunRPC]
+    public void PunReleaseOnTurnEnd() {
+        Debug.Log("PunReleaseOnTurnEnd");
+        if (!_released) {
+            _forcedRelease = true;
+            Release(Board.Instance.GetHook(this.Alliance).transform.position + new Vector3(0, 3f, 0));
+        }
+    }
+
+
     [PunRPC]
     public void Release(Vector3 pos) {
         Debug.Log("Release fired for player " + (Board.Instance.isHost ? 1 : 0) + " pos: " + transform.position.x + "," + transform.position.y + "," + transform.position.z);
+
+        Enable = false;
+        isMouseDown = false;
 
         _released = true;
 
@@ -192,7 +213,9 @@ public class Disk : Photon.PunBehaviour {
         StartCoroutine(UnHook());
 
         Board.Instance.OnDiskReleased(this);
-        Invoke("StopMoving", 5);
+        if(!_forcedRelease) {
+            Invoke("StopMoving", 5);
+        }
     }
 
     public void StopMoving() {
