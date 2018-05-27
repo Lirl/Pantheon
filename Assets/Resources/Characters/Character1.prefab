@@ -156,7 +156,7 @@ Transform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1095599919621176}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -8.82859, y: -0.18, z: -25.625647}
+  m_LocalPosition: {x: -67.4629, y: -17.710001, z: 70.66971}
   m_LocalScale: {x: 6, y: 0.1, z: 6}
   m_Children:
   - {fileID: 224169372647616420}
@@ -364,7 +364,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   delay: 3
-  radius: 8
+  radius: 20
   explosionForce: 5000
   explosionEffect: {fileID: 1000011797152326, guid: acf39d9f4addf294d93fa56fa373961b,
     type: 2}
@@ -451,6 +451,7 @@ MonoBehaviour:
   endTurn: 1
   HealthBar: {fileID: 114801654196998890}
   HeightOffSet: 0
+  AudioManager: {fileID: 0}
   SJ: {fileID: 0}
   mesh: {fileID: 0}
   Alliance: 0
@@ -701,7 +702,7 @@ SpringJoint:
   m_ConnectedBody: {fileID: 0}
   m_Anchor: {x: 0, y: 1, z: 0}
   m_AutoConfigureConnectedAnchor: 1
-  m_ConnectedAnchor: {x: -8.82859, y: -2.9, z: -25.625647}
+  m_ConnectedAnchor: {x: -67.4629, y: -17.61, z: 70.66971}
   serializedVersion: 2
   m_Spring: 20
   m_Damper: 0.2
@@ -728,7 +729,7 @@ SpriteRenderer:
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
   m_Materials:
-  - {fileID: 2100000, guid: b53e29b8cee22e046ba7d1566f08db93, type: 2}
+  - {fileID: 10754, guid: 0000000000000000f000000000000000, type: 0}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -748,7 +749,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: 21300000, guid: 14ce03f25c2b4c54db5772f9167c3f91, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 1c50dac66bf250a4f8e13b7c8104fe1a, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0

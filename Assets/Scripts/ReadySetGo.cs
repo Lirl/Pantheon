@@ -10,31 +10,38 @@ public class ReadySetGo : MonoBehaviour {
     private int index;
     int textSize;
     private bool flag = true;
+    private bool stop = false;
 
     // Use this for initialization
-    void Start () {
+    void Start() {
         index = 0;
     }
-	
-	// Update is called once per frame
-	void Update () {
+
+    // Update is called once per frame
+    void Update() {
         // Values between 0 and 1
-        if(text.fontSize <= 24) {
+        if (stop) {
+            return;
+        }
+
+        if (text.fontSize <= 24) {
             text.fontSize += 1;
-        } 
-        
-        if(text.fontSize > 24 && flag) {
-            
+        }
+
+        if (text.fontSize > 24 && flag) {
+
             flag = false;
             Invoke("ChangeText", 1);
         }
-	}
+    }
 
 
-    public void ChangeText() { 
-        if(index == shoutout.Length) {
+    public void ChangeText() {
+        if (index == shoutout.Length) {
             text.text = "";
             Board.Instance.StartGame();
+            stop = true;
+            return;
         }
 
         text.text = shoutout[index];

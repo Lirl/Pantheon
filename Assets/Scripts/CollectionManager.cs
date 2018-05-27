@@ -13,15 +13,26 @@ public class CollectionManager : MonoBehaviour {
 
     public GameObject[] Descriptions;
     public GameObject alreadyInUse;
+    public Sprite[] God;
 
     public bool firstCardClicked = false;
     public bool firstClickedIsOnDeck;
+    public GameObject god;
+    public Image image;
 
     private void Start() {        
         user = GameObject.FindObjectOfType<User>();    
         for (int i = 0; i < user.deck.Count; i++) {
             var card = GameObject.Find("" + user.deck[i]);
             card.transform.parent = Deck.transform;
+        }
+        god = GameObject.FindGameObjectWithTag("God");
+        if (god) {
+            Debug.Log("God Found");
+            image = god.GetComponent<Image>();
+            god.SetActive(false);
+        } else {
+            Debug.Log("God is not here right now");
         }
     }
 
@@ -85,5 +96,12 @@ public class CollectionManager : MonoBehaviour {
         } else {
             Swap(card);
         }
+    }
+
+    public void ChangeGod(int code) {
+        user.ChangeGod(code);
+        Debug.Log("God Selected is " + code);
+        
+        image.sprite = God[code];
     }
 }

@@ -50,4 +50,5 @@ MonoBehaviour:
   - Release
   - TaggedPlayer
   - PunResetTurnSlider
+  - PunStartGame
   DisableAutoOpenWizard: 1

@@ -9,6 +9,8 @@ TagManager:
   - Hook
   - Hand1
   - Character3
+  - UIPrefab
+  - God
   layers:
   - Default
   - TransparentFX

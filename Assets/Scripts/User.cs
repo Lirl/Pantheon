@@ -81,6 +81,11 @@ public class User : MonoBehaviour {
         instance.deck.Capacity = 5;
         Save();
     }
+
+    public void ChangeGod(int code) {
+        god = code;
+        Save();
+    }
 }
 
 [Serializable]

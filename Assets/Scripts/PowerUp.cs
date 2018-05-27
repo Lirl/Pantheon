@@ -3,18 +3,26 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PowerUp : MonoBehaviour {
+public class PowerUp : Photon.PunBehaviour {
 
     public int xTile = -1;
     public int yTile = -1;
     public int code = -1;
     public GameObject effect;
     public float m_Speed = 120f;
+    public AudioManager AudioManager;
+
+    private void Start() {
+        AudioManager = GameObject.FindObjectOfType<AudioManager>();
+    }
 
     private void OnTriggerEnter(Collider other) {
+
         var collided = other.GetComponent<Disk>();
         if (!collided) {
             return;
+        } else {
+            AudioManager.PlayFor("Trail Renderer Sound", 0.05f);
         }
         if (!collided._released) {
             return;
@@ -27,8 +35,14 @@ public class PowerUp : MonoBehaviour {
         }
         if (code == 1) {
             collided.Enlarge();
+        }
+
+        if(PhotonNetwork.connected && PhotonNetwork.inRoom) {
+            PhotonNetwork.Destroy(photonView);
+        } else {
             Destroy(gameObject);
         }
+        
     }
 
     private void CreatePlus(int alliance, int xTile, int yTile) {
@@ -40,7 +54,12 @@ public class PowerUp : MonoBehaviour {
             Board.Instance.HandleSetTileAlliance(alliance, xTile, i);
         }
         Instantiate(effect, transform.position, Quaternion.identity);
-        Destroy(gameObject);
+        if (PhotonNetwork.connected && PhotonNetwork.inRoom) {
+            PhotonNetwork.Destroy(photonView);
+        }
+        else {
+            Destroy(gameObject);
+        }
     }
 
     private void Update() {

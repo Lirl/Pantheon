@@ -14,6 +14,9 @@ public class Board : Photon.PunBehaviour {
     public GameObject Hand;
 
     public GameObject TimeMessage { get; private set; }
+    public GameObject Lightnings;
+    public GameObject[] Flames;
+    private AudioManager AudioManager;
 
     public double WinScoreThreshold = 0.8; // you need 80% control over the board
 
@@ -23,54 +26,18 @@ public class Board : Photon.PunBehaviour {
     public const int MAP_WIDTH_REAL = 20;
     public const int MAP_HEIGHT_REAL = 30;
 
-    internal void StartGame() {
-        TimeSlider.maxValue = TurnTime;
 
-        // UI Setop
-        Hand = GameObject.Find("Hand");
-        TimeMessage = GameObject.Find("TimeMessage") as GameObject;
-
-        alertCanvas = GameObject.Find("AlertText").GetComponent<CanvasGroup>();
-        yourScore = GameObject.Find("YourScore");
-        opponentScore = GameObject.Find("OpponentScore");
-
-        WinMessage.SetActive(false);
-        LoseMessage.SetActive(false);
-        BackToMenu.SetActive(false);
-
-
-        // Check player connectivity
-        if (PhotonNetwork.connected && PhotonNetwork.inRoom) {
-            isHost = GameManager.Instance.isHost;
+    public void StartGame() {
+        if(PhotonNetwork.connected && PhotonNetwork.inRoom) {
+            PhotonView photonView = PhotonView.Get(this);
+            photonView.RPC("PunStartGame", PhotonTargets.All);
         } else {
-            isHost = true;
+            PunStartGame();
         }
+    }
 
-        // The only way this condition will suffies
-        // is when the user has entered his first game, which loads this scene without being
-        // connected to a room
-        if (!PhotonNetwork.inRoom) {
-            isTutorial = true;
-        }
-
-        Alert(isHost ? "I am Host" : "I am Client");
-
-        yourScore.GetComponentInChildren<Text>().color = isHost ? Color.blue : Color.red;
-        yourColor = yourScore.GetComponentInChildren<Text>().color;
-        yourScore.GetComponentInChildren<Text>().text = "0";
-        opponentScore.GetComponentInChildren<Text>().color = isHost ? Color.red : Color.blue;
-        opponentColor = opponentScore.GetComponentInChildren<Text>().color;
-        opponentScore.GetComponentInChildren<Text>().text = "0";
-
-        // Client player has its camera rotate 180 degrees
-        if (!isHost) {
-            Camera.main.transform.rotation = Quaternion.Euler(90, 180, 0);
-        }
-
-        // Disable hand
-        if (Hand) {
-            Hand.SetActive(false);
-        }
+    [PunRPC]
+    public void PunStartGame() {
 
         TurnTime = 8;
         TurnCounter = 1;
@@ -79,21 +46,31 @@ public class Board : Photon.PunBehaviour {
             DrawCard();
         }
 
-        Invoke("CheckWinner", gameTime);
-        Invoke("TurnDownTheLights", 60f);
+        started = true;
+
         if (isTutorial) {
             StartTurnTutorial();
             Invoke("MovePillars", 4f);
-            Invoke("CreatePowerUp", 5f);
-        } else if (isHost) {
+            if (!isTutorialShowMessages) {
+                Invoke("TurnDownTheLights", 60f);
+                Invoke("StartTheFire", 80f);
+                Invoke("CheckWinner", gameTime);
+                Invoke("CreatePowerUp", 20f);
+            }
+            return;
+        }
+        else if (isHost) {
             // Host starts
+            Invoke("CheckWinner", gameTime);
             StartTurn();
             Invoke("CreatePowerUp", 20f);
-            Invoke("MovePillars", 4f);
-
         }
 
-        started = true;
+        Invoke("MovePillars", 4f);
+        Invoke("TurnDownTheLights", 60f);
+        Invoke("StartTheFire", 80f);
+
+       
     }
 
     public int powerUpsAmount = 2;
@@ -108,6 +85,7 @@ public class Board : Photon.PunBehaviour {
     public CanvasGroup alertCanvas;
     private GameObject yourScore;
     private GameObject opponentScore;
+    private GameObject diskClassMessage;
     private float lastAlert;
     private bool alertActive;
 
@@ -156,10 +134,82 @@ public class Board : Photon.PunBehaviour {
     internal bool isLightsOn = false;
     private GameObject _lastCreatedDisk;
     private bool started;
+    private bool isTutorialDontShowTime;
+    private int _diskFallenCount = 0;
+    private int _numberOfDiskHits;
+    private bool isTutorialShowMessages;
 
     private void Start() {
         Instance = this;
+        AudioManager = GameObject.FindObjectOfType<AudioManager>();
+
+        TimeSlider.maxValue = TurnTime;
+
+        // UI Setop
+        Hand = GameObject.Find("Hand");
+        TimeMessage = GameObject.Find("TimeMessage") as GameObject;
+
+        alertCanvas = GameObject.Find("AlertText").GetComponent<CanvasGroup>();
+        yourScore = GameObject.Find("YourScore");
+        opponentScore = GameObject.Find("OpponentScore");
+
+        diskClassMessage = GameObject.Find("DiskClassMessage");
+        if (diskClassMessage) {
+            diskClassMessage.SetActive(false);
+        }
+
+
+        WinMessage.SetActive(false);
+        LoseMessage.SetActive(false);
+        BackToMenu.SetActive(false);
+
+
+        // Check player connectivity
+        if (PhotonNetwork.connected && PhotonNetwork.inRoom) {
+            isHost = GameManager.Instance.isHost;
+        }
+        else {
+            isHost = true;
+        }
+
+        // The only way this condition will suffies
+        // is when the user has entered his first game, which loads this scene without being
+        // connected to a room
+        if (!PhotonNetwork.inRoom) {
+
+            if(User.instance && User.instance.wins + User.instance.losses == 0) {
+                isTutorialShowMessages = true;
+                isTutorialDontShowTime = true;
+            }
+            isTutorial = true;
+
+            //Invoke("CheckWinner", gameTime);
+        }
+
+        Alert(isHost ? "I am Host" : "I am Client");
+
+        yourScore.GetComponentInChildren<Text>().color = isHost ? Color.blue : Color.red;
+        yourColor = yourScore.GetComponentInChildren<Text>().color;
+        yourScore.GetComponentInChildren<Text>().text = "0";
+        opponentScore.GetComponentInChildren<Text>().color = isHost ? Color.red : Color.blue;
+        opponentColor = opponentScore.GetComponentInChildren<Text>().color;
+        opponentScore.GetComponentInChildren<Text>().text = "0";
+
+        // Client player has its camera rotate 180 degrees
+        if (!isHost) {
+            Camera.main.transform.rotation = Quaternion.Euler(90, 180, 0);
+        }
+
+        // Disable hand
+        if (Hand) {
+            Hand.SetActive(false);
+        }
+
         GenerateBoard();
+    }
+
+    internal void OnDiskOutOfBound(Disk disk) {
+        _diskFallenCount++;
     }
 
     #region Disk Management
@@ -183,6 +233,12 @@ public class Board : Photon.PunBehaviour {
         prevDiskIdleResult = new Vector3(-1, -1, -1);
 
         _lastCreatedDisk = CreateDisk((isHost ? 1 : 0), code);
+
+        if (isTutorialShowMessages) {
+            if (diskClassMessage) {
+                diskClassMessage.SetActive(false);
+            }
+        }
     }
 
     internal GameObject CreateDisk(int alliance, int code) {
@@ -196,7 +252,8 @@ public class Board : Photon.PunBehaviour {
         GameObject ins;
         if (PhotonNetwork.connected && PhotonNetwork.inRoom) {
             ins = PhotonNetwork.Instantiate("Characters/Character" + code, hook.transform.position + new Vector3(0, 3f, 0), Quaternion.identity, 0);
-        } else {
+        }
+        else {
             ins = Instantiate(prefab, new Vector3(hook.transform.position.x, hook.transform.position.y + 1.5f, hook.transform.position.z), Quaternion.identity);
         }
         ins.GetComponent<SpringJoint>().connectedBody = hook.GetComponent<Rigidbody>();
@@ -216,13 +273,15 @@ public class Board : Photon.PunBehaviour {
         GameObject hook;
         if (alliance == 1) {
             hook = GameObject.Find("HostHook");
-        } else {
+        }
+        else {
             hook = GameObject.Find("ClientHook");
         }
         GameObject ins;
         if (PhotonNetwork.connected && PhotonNetwork.inRoom) {
             ins = PhotonNetwork.Instantiate(DummyDisk.name, hook.transform.position, Quaternion.identity, 0);
-        } else {
+        }
+        else {
             ins = Instantiate(DummyDisk, hook.transform.position, Quaternion.identity);
         }
 
@@ -248,21 +307,38 @@ public class Board : Photon.PunBehaviour {
         return ins;
     }
 
+    internal void OnDiskDamangeHandled(Disk disk1, Disk disk2) {
+        // Disk1 hitter
+        // Disk2 took damage
+
+        if (_numberOfDiskHits == 0 && isTutorialShowMessages) {
+            TutorialManager.Instance.ShowMessage("Each follower deals different damange, to different follower depends on class", 5, 11);
+        }
+
+        _numberOfDiskHits++;
+    }
+
 
     private void OnDiskCreated(GameObject ins) {
-        if (isTutorial) {
-            Debug.Log("OnDiskCreated TurnCounter : " + TurnCounter);
-            if (TurnCounter == 1) {
-                Debug.Log("is first turn in tutorial");
-                //Instantiate(Resources.Load("Tutorial/SwipeIndicator"), ins.gameObject.transform.position + new Vector3(0, 5, 0), Quaternion.identity);
+        if (TurnCounter == 1 && isTutorialShowMessages) {
+            Debug.Log("is first turn in tutorial");
+
+            // Destroy arrows 
+            var arrows = GameObject.FindGameObjectsWithTag("UIPrefab");
+            foreach (GameObject food in arrows) {
+                Destroy(food);
             }
+
+            Instantiate(Resources.Load("Tutorial/SwipeIndicator"), ins.gameObject.transform.position + new Vector3(0.0f, 5.0f, -5.0f), Quaternion.Euler(90, 0, 0));
+            TutorialManager.Instance.ShowMessage("Drag and release to send your follower", 3, 15);
         }
     }
 
     public GameObject GetHook(int alliance) {
         if (alliance == 1) {
             return GameObject.Find("HostHook");
-        } else {
+        }
+        else {
             return GameObject.Find("ClientHook");
         }
     }
@@ -275,7 +351,8 @@ public class Board : Photon.PunBehaviour {
                     pos += DisksList[i].gameObject.GetComponent<Rigidbody>().velocity;
                 }
             }
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             Debug.Log("Exception : " + e.Message);
         }
 
@@ -288,7 +365,8 @@ public class Board : Photon.PunBehaviour {
             }
 
             OnDisksIdle();
-        } else {
+        }
+        else {
             prevDiskIdleResult = pos;
             Invoke("OnDisksIdleTrigger", 1);
         }
@@ -304,7 +382,8 @@ public class Board : Photon.PunBehaviour {
             _diskIdleTriggered = true;
             if (isTutorial) {
                 EndTurnTutorial();
-            } else {
+            }
+            else {
                 EndTurn();
             }
         }
@@ -337,7 +416,7 @@ public class Board : Photon.PunBehaviour {
             case 2:
 
                 // First move by the player, summon a priest
-                return 3; // groot
+                return 0; // groot
 
             default:
                 break;
@@ -355,7 +434,8 @@ public class Board : Photon.PunBehaviour {
         enemies.Sort(delegate (Disk d1, Disk d2) {
             if (Vector3.Distance(d1.gameObject.transform.position, hook.transform.position) > Vector3.Distance(d2.transform.position, hook.transform.position)) {
                 return 1;
-            } else {
+            }
+            else {
                 return -1;
             }
         });
@@ -363,7 +443,14 @@ public class Board : Photon.PunBehaviour {
         /*Vector3 aim = (enemies[0].transform.position - hook.transform.position).normalized;
         AIAimDiskPosition = hook.transform.position + (aim * -40);*/
 
-        AIAimDiskPosition = new Vector3(AILastCreatedDisk.transform.position.x + UnityEngine.Random.Range(-15.0f, 15.0f), AILastCreatedDisk.transform.position.y, AILastCreatedDisk.transform.position.z + UnityEngine.Random.Range(10.0f, 20.0f));
+        if (TurnCounter == 2 && isTutorialShowMessages) {
+            AIAimDiskPosition = new Vector3(AILastCreatedDisk.transform.position.x, AILastCreatedDisk.transform.position.y, AILastCreatedDisk.transform.position.z + 10.0f);
+        }
+        else {
+            AIAimDiskPosition = new Vector3(AILastCreatedDisk.transform.position.x + UnityEngine.Random.Range(-15.0f, 15.0f), AILastCreatedDisk.transform.position.y, AILastCreatedDisk.transform.position.z + UnityEngine.Random.Range(10.0f, 20.0f));
+        }
+
+
 
         // So SpringJoint will not drag it out off aiming position
         AILastCreatedDisk.GetComponent<Rigidbody>().isKinematic = true;
@@ -382,7 +469,8 @@ public class Board : Photon.PunBehaviour {
         if (Vector3.Distance(AILastCreatedDisk.transform.position, AIAimDiskPosition) < 0.1) {
             AIAimDiskPositionChosen = false;
             AIReleaseDisk();
-        } else {
+        }
+        else {
             AILastCreatedDisk.transform.position = Vector3.MoveTowards(AILastCreatedDisk.transform.position, AIAimDiskPosition, step);
         }
     }
@@ -410,16 +498,86 @@ public class Board : Photon.PunBehaviour {
                 Hand.SetActive(true);
             }
 
-        } else {
+            if (isTutorialShowMessages) {
+
+                if (TurnCounter == 1) {
+                    // show arrows
+                    Debug.Log("Creating Arrows");
+                    var hook = GetHook(1);
+                    Instantiate(Resources.Load("Tutorial/ArrowIndicator"), new Vector3(hook.gameObject.transform.position.x + 23, 10, hook.gameObject.transform.position.z), Quaternion.Euler(90, 0, 0));
+                    Instantiate(Resources.Load("Tutorial/ArrowIndicator"), new Vector3(hook.gameObject.transform.position.x, 10, hook.gameObject.transform.position.z), Quaternion.Euler(90, 0, 0));
+                    Instantiate(Resources.Load("Tutorial/ArrowIndicator"), new Vector3(hook.gameObject.transform.position.x - 23, 10, hook.gameObject.transform.position.z), Quaternion.Euler(90, 0, 0));
+                    TutorialManager.Instance.ShowMessage("Choose a follower", 2);
+                }
+
+                if (TurnCounter == 3) {
+                    Invoke("TurnDownTheLights", 60f);
+                    Invoke("StartTheFire", 80f);
+                    gameTime = 90;
+                    Invoke("CheckWinner", 90f);
+                    isTutorialDontShowTime = false;
+                    TutorialManager.Instance.ShowMessage("A round last 90 seconds! god with the highest score wins", 4, 15);
+                    TutorialManager.Instance.ShowMessage("Try hitting with a follower an opponent", 4, 12);
+                }
+
+                if (TurnCounter == 5) {
+                    TutorialManager.Instance.ShowMessage("The outer-circle of each follower indicates the followers class", 4, 12);
+                    Invoke("ShowClassMessage", 3.5f);
+                }
+
+                if (TurnCounter == 7) {
+                    // Destroy score arrow prefab
+                    var arrows = GameObject.FindGameObjectsWithTag("UIPrefab");
+                    foreach (GameObject food in arrows) {
+                        Destroy(food);
+                    }
+                }
+            }
+
+        }
+        else {
             // AI
             Invoke("AIMove", 1);
         }
         isZoomedOut = true;
     }
 
+    public void ShowClassMessage() {
+        diskClassMessage.SetActive(true);
+    }
+
     public void AIMove() {
         int cardCode = GetAICardCode();
         AILastCreatedDisk = CreateDisk(0, cardCode);
+
+
+        if (isTutorialShowMessages) {
+            if (TurnCounter == 2) {
+                // Destroy score arrow prefab
+                var arrows = GameObject.FindGameObjectsWithTag("UIPrefab");
+                foreach (GameObject food in arrows) {
+                    Destroy(food);
+                }
+
+                TutorialManager.Instance.ShowMessage("Opponent God Turn", 1, 20);
+            }
+
+            if (TurnCounter == 4) {
+                // Destroy score arrow prefab
+                var arrows = GameObject.FindGameObjectsWithTag("UIPrefab");
+                foreach (GameObject food in arrows) {
+                    Destroy(food);
+                }
+            }
+
+            if (TurnCounter == 6) {
+                PunHandleCreatePowerUp(0, 10, 19);
+
+                Instantiate(Resources.Load("Tutorial/ArrowIndicator"), new Vector3(0, 0, 20), Quaternion.Euler(90, 180, 180));
+                TutorialManager.Instance.ShowMessage("Picking a powerup increases your follower powers or gain you more board control", 4, 10);
+            }
+        }
+
 
         Invoke("AIAimDisk", 2);
     }
@@ -504,7 +662,8 @@ public class Board : Photon.PunBehaviour {
 
             if (PhotonNetwork.connected && PhotonNetwork.inRoom) {
                 PhotonNetwork.RaiseEvent(0, GetTilesAsString(), true, null);
-            } else {
+            }
+            else {
                 isHost = !isHost;
                 StartTurn();
             }
@@ -514,9 +673,11 @@ public class Board : Photon.PunBehaviour {
     public int LeadingPlayer() {
         if (Score[0] > Score[1]) {
             return 0;
-        } else if (Score[0] < Score[1]) {
+        }
+        else if (Score[0] < Score[1]) {
             return 1;
-        } else {
+        }
+        else {
             return -1;
         }
     }
@@ -529,7 +690,8 @@ public class Board : Photon.PunBehaviour {
         Debug.Log("CheckWinner");
         if (Score[0] >= Score[1]) {
             HandleShowWinner(0);
-        } else {
+        }
+        else {
             HandleShowWinner(1);
         }
 
@@ -544,8 +706,21 @@ public class Board : Photon.PunBehaviour {
 
         if (alliance == (isHost ? 1 : 0)) {
             WinMessage.SetActive(true);
-        } else {
+            if(User.instance) {
+                User.instance.wins++;
+                User.instance.gold += Score[alliance] - Score[(alliance + 1) % 2];
+                User.instance.Save();
+                AudioManager.Play("Win");
+            }
+            
+        }
+        else {
             LoseMessage.SetActive(true);
+            if(User.instance) {
+                User.instance.losses++;
+                User.instance.Save();
+                AudioManager.Play("Lose");
+            }
         }
         BackToMenu.SetActive(true);
     }
@@ -553,21 +728,27 @@ public class Board : Photon.PunBehaviour {
 
     private void Update() {
 
-        if(!started) {
+        if (!started) {
             return;
         }
 
         gameTime -= Time.deltaTime;
-        TimeSlider.value -= Time.deltaTime;
+        if (!isTutorial) {
+            TimeSlider.value -= Time.deltaTime;
+        }
 
-        if (gameTime >= 0 && !gameIsOver) {
+        if (isTutorialDontShowTime) {
+            TimeMessage.GetComponentInChildren<Text>().text = "";
+        }
+        else if (gameTime >= 0 && !gameIsOver) {
             TimeMessage.GetComponentInChildren<Text>().text = Math.Floor(gameTime).ToString();
         }
 
         if (isTutorial) {
             yourScore.GetComponentInChildren<Text>().text = Score[1].ToString();
             opponentScore.GetComponentInChildren<Text>().text = Score[0].ToString();
-        } else {
+        }
+        else {
             yourScore.GetComponentInChildren<Text>().text = Score[isHost ? 1 : 0].ToString();
             opponentScore.GetComponentInChildren<Text>().text = Score[isHost ? 0 : 1].ToString();
         }
@@ -577,7 +758,8 @@ public class Board : Photon.PunBehaviour {
             if (_prevLead == (isHost || isTutorial ? 1 : 0)) {
                 yourScore.GetComponentInChildren<Text>().color = Color.Lerp(Color.white, yourColor, Mathf.PingPong(Time.time, 1));
                 opponentScore.GetComponentInChildren<Text>().color = opponentColor;
-            } else {
+            }
+            else {
                 opponentScore.GetComponentInChildren<Text>().color = Color.Lerp(Color.white, opponentColor, Mathf.PingPong(Time.time, 1));
                 yourScore.GetComponentInChildren<Text>().color = yourColor;
             }
@@ -587,7 +769,8 @@ public class Board : Photon.PunBehaviour {
         if (isZoomedIn) {
             if (Camera.main.orthographicSize >= 52) {
                 Camera.main.orthographicSize -= 0.5f;
-            } else {
+            }
+            else {
                 isZoomedIn = false;
             }
         }
@@ -595,7 +778,8 @@ public class Board : Photon.PunBehaviour {
         if (isZoomedOut) {
             if (Camera.main.orthographicSize <= 75) {
                 Camera.main.orthographicSize += 0.5f;
-            } else {
+            }
+            else {
                 isZoomedOut = false;
             }
         }
@@ -614,7 +798,8 @@ public class Board : Photon.PunBehaviour {
 
         if (PhotonNetwork.connected && PhotonNetwork.inRoom) {
             photonView.RPC("PunHandleCreatePowerUp", PhotonTargets.All, code, x, y);
-        } else {
+        }
+        else {
             PunHandleCreatePowerUp(code, x, y);
         }
     }
@@ -626,7 +811,8 @@ public class Board : Photon.PunBehaviour {
             GameObject rune;
             if (PhotonNetwork.connected && PhotonNetwork.inRoom) {
                 rune = PhotonNetwork.Instantiate("Characters/PowerUps" + code, Tiles[x, y].transform.position + new Vector3(0, 2f, 0), Quaternion.Euler(new Vector3(45, 45, 45)), 0);
-            } else {
+            }
+            else {
                 rune = Instantiate(toInstantiate, Tiles[x, y].transform.position + new Vector3(0, 2f, 0), Quaternion.Euler(new Vector3(45, 45, 45)));
             }
             var runeScript = rune.GetComponent<PowerUp>();
@@ -660,7 +846,8 @@ public class Board : Photon.PunBehaviour {
         if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit, 50.0f, LayerMask.GetMask("Board"))) {
             mouseOver.x = (int)(hit.point.x + boardOffset.x);
             mouseOver.y = (int)((hit.point.z + -1 * boardOffset.z) * -1);
-        } else {
+        }
+        else {
             mouseOver.x = -1;
             mouseOver.y = -1;
         }
@@ -672,7 +859,8 @@ public class Board : Photon.PunBehaviour {
         for (int i = 0; i < 30; i++) {
             if (User.instance != null) {
                 Deck.Add(User.instance.deck[UnityEngine.Random.Range(0, User.instance.deck.Count)]); // UnityEngine.Random.Range(0, 4));
-            } else {
+            }
+            else {
                 Deck.Add(UnityEngine.Random.Range(0, 3));
             }
         }
@@ -716,7 +904,8 @@ public class Board : Photon.PunBehaviour {
         if (PhotonNetwork.connected && PhotonNetwork.inRoom) {
             PhotonView photonView = PhotonView.Get(this);
             photonView.RPC("PunHandleSetTileAlliance", PhotonTargets.All, alliance, x, y);
-        } else {
+        }
+        else {
             PunHandleSetTileAlliance(alliance, x, y);
         }
     }
@@ -734,13 +923,15 @@ public class Board : Photon.PunBehaviour {
                 if (cube.Alliance != -1) {
                     Score[cube.Alliance]--;
                     Score[alliance]++;
-                } else {
+                }
+                else {
                     Score[alliance]++;
                 }
                 Debug.Log("cube.SetAlliance called");
                 cube.SetAlliance(alliance);
             }
-        } else {
+        }
+        else {
             Debug.LogWarning("Attempting to set cube " + x + ", " + y + " but Tiles[x,y] is null");
         }
     }
@@ -827,7 +1018,8 @@ public class Board : Photon.PunBehaviour {
                             sb.Append(cube.ToString() + '+');
                         }
                     }
-                } catch (Exception e) {
+                }
+                catch (Exception e) {
                     Debug.Log("SyncTiles: (" + i + "," + j + ") " + e.Message);
                 }
             }
@@ -884,6 +1076,17 @@ public class Board : Photon.PunBehaviour {
             //Invoke("OnDisksIdle", 3); causes issues when handling disk damage, since it can cause a quick shift of turn before any collision
             OnDisksIdleTrigger();
         }
+        if (isTutorialShowMessages && TurnCounter == 1) {
+            // Destroy swipe prefab
+            var arrows = GameObject.FindGameObjectsWithTag("UIPrefab");
+            foreach (GameObject food in arrows) {
+                Destroy(food);
+            }
+
+            Instantiate(Resources.Load("Tutorial/ArrowIndicator"), new Vector3(-11, 10, 50), Quaternion.Euler(90, 0, 180));
+            TutorialManager.Instance.ShowMessage("Your score increases the more land you control", 3, 15);
+            //TutorialManager.Instance.ShowMessageInSeconds(3, "Send your follower to conquer as much land as possible", 3, 9);
+        }
     }
 
     internal void OnDiskClick(Disk disk) {
@@ -903,6 +1106,13 @@ public class Board : Photon.PunBehaviour {
 
     public void TurnDownTheLights() {
         isLightsOn = true;
+        Lightnings.SetActive(true);
+    }
+
+    public void StartTheFire() {
+        foreach (GameObject g in Flames) {
+            g.SetActive(true);
+        }
     }
 
     private void ResetTurnSlider() {
