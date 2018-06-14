@@ -34,7 +34,7 @@ public class PowerUp : Photon.PunBehaviour {
             CreatePlus(alliance, xTile, yTile);
         }
         if (code == 1) {
-            collided.Enlarge();
+            collided.Enlarge(2);
         }
 
         if(PhotonNetwork.connected && PhotonNetwork.inRoom) {

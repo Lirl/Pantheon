@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
+public delegate void DiskReleaseHandler();
+
 public class Disk : Photon.PunBehaviour {
     private Vector3 originalPosition;
     internal bool startedMoving = false;
@@ -17,13 +19,29 @@ public class Disk : Photon.PunBehaviour {
     public Slider HealthBar;
     public float HeightOffSet;
 
+    public List<DiskReleaseHandler> OnDiskRelease = new List<DiskReleaseHandler>();
+
     public AudioManager AudioManager;
 
     LineRenderer line;
     public SpringJoint SJ;
     public MeshRenderer mesh;
+    public List<string> Buffs = new List<string>();
+
+    internal void AddBuff(string v) {
+        Buffs.Add(v);
+    }
+
+    internal bool hasBuff(string v) {
+        return Buffs.Contains(v);
+    }
+
+    internal void RemoveBuff(string v) {
+        Buffs.Remove(v);
+    }
 
     public int Alliance;
+
     public double Health = -1;
     public double TotalHealth = -1;
 
@@ -35,12 +53,20 @@ public class Disk : Photon.PunBehaviour {
     public bool Enable = false; // when disabled, block any mouse interaction with this game object
 
     private static int _idCounter = 0;
-    private bool enlarge = false;
+    private float enlarge = 0;
+    private float _normalScaleX;
+    private float _normalScaleZ;
+    private float _enlargeScaleX;
+    private float _enlargeScaleZ;
+    private float _shrinkScaleX;
+    private float _shrinkScaleZ;
+
     public bool _released = false;
     private bool inField = false;
     private bool outOfBounds = false;
 
     public bool _forcedRelease = false;
+
 
     public static int GenerateId() {
         _idCounter++;
@@ -77,6 +103,11 @@ public class Disk : Photon.PunBehaviour {
         GetComponent<SpringJoint>().connectedAnchor = hook.transform.position;
         GetComponent<SpringJoint>().connectedBody = hook.GetComponent<Rigidbody>();
 
+        _normalScaleX = gameObject.transform.localScale.x;
+        _normalScaleZ = gameObject.transform.localScale.z;
+        originalPosition = transform.position;
+
+
         if (!Board.Instance.isYourTurn) {
             Destroy(GetComponent<SpringJoint>());
         }
@@ -94,9 +125,10 @@ public class Disk : Photon.PunBehaviour {
         line.SetPosition(0, SJ.connectedBody.position);
         if (Health == -1) {
             Health = 3;
-            TotalHealth = Health;
-            HealthBar.value = (float)Health;
+            TotalHealth = 3;
         }
+
+        HealthBar.value = (float)Health;
         Id = GenerateId();
         HeightOffSet = (Id == 3) ? 0.1f : 0;
         Board.Instance.SaveDisk(Id, this);
@@ -119,13 +151,19 @@ public class Disk : Photon.PunBehaviour {
             transform.position = new Vector3(transform.position.x, 0.1f + HeightOffSet, transform.position.z);
         }
 
-        if (enlarge) {
-            if (gameObject.transform.localScale.x < 10 && gameObject.transform.localScale.z < 10) {
+        if (enlarge > 0) {
+            if (gameObject.transform.localScale.x < _enlargeScaleX && gameObject.transform.localScale.z < _enlargeScaleZ) {
                 gameObject.transform.position += new Vector3(0, 0.05f, 0);
                 gameObject.transform.localScale += new Vector3(0.1f, 0, 0.1f);
+            } else {
+                enlarge = 0;
             }
-            else {
-                enlarge = false;
+        } else if (enlarge < 0) {
+            if (gameObject.transform.localScale.x > _shrinkScaleX && gameObject.transform.localScale.z > _shrinkScaleZ) {
+                gameObject.transform.position -= new Vector3(0, 0.05f, 0);
+                gameObject.transform.localScale -= new Vector3(0.1f, 0, 0.1f);
+            } else {
+                enlarge = 0;
             }
         }
 
@@ -154,8 +192,6 @@ public class Disk : Photon.PunBehaviour {
 
         _released = false;
 
-        originalPosition = transform.position;
-
         isMouseDown = true;
         Rigidbody.isKinematic = true;
         mesh.enabled = true;
@@ -171,7 +207,7 @@ public class Disk : Photon.PunBehaviour {
             return;
         }
 
-        var pos = transform.position;
+        var pos = new Vector3(transform.position.x, transform.position.y, transform.position.z);
         transform.position = originalPosition;
 
         if (PhotonNetwork.connected && PhotonNetwork.inRoom) {
@@ -221,9 +257,18 @@ public class Disk : Photon.PunBehaviour {
         transform.position = pos;
         StartCoroutine(UnHook());
 
+        Invoke("RunOnDiskReleaseHandlers", 1);
+
         Board.Instance.OnDiskReleased(this);
         if (!_forcedRelease) {
             Invoke("StopMoving", 5);
+        }
+    }
+
+
+    public void RunOnDiskReleaseHandlers() {
+        foreach (var item in OnDiskRelease) {
+            item.Invoke();
         }
     }
 
@@ -334,11 +379,23 @@ public class Disk : Photon.PunBehaviour {
 
     [PunRPC]
     private void PunDealDamage(double dmg) {
-
         Health = Health - dmg;
         HealthBar.value = (float)Health;
+    }
 
+    public void SetHealth(double health) {
+        if (PhotonNetwork.connected && PhotonNetwork.inRoom) {
+            PhotonView photonView = PhotonView.Get(this);
+            photonView.RPC("PunSetHealth", PhotonTargets.All, health);
+        } else {
+            PunSetHealth(health);
+        }
+    }
 
+    [PunRPC]
+    public void PunSetHealth(double health) {
+        Health = health;
+        HealthBar.value = (float)Health;
     }
 
     internal void DestroyDisk() {
@@ -354,9 +411,19 @@ public class Disk : Photon.PunBehaviour {
     }
 
 
-    internal void Enlarge() {
-        enlarge = true;
+    internal void Enlarge(float ratio) {
+        _enlargeScaleX = _normalScaleX * ratio;
+        _enlargeScaleZ = _normalScaleZ * ratio;
+        enlarge = 1;
     }
+
+
+    internal void Shrink(float ratio) {
+        _enlargeScaleX = gameObject.transform.localScale.x / ratio;
+        _enlargeScaleZ = gameObject.transform.localScale.z / ratio;
+        enlarge = -1;
+    }
+
 
     public override string ToString() {
         var pos = transform.position;

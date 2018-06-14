@@ -6,7 +6,7 @@ using UnityEngine;
 public class Granade : MonoBehaviour {
 
     public float delay = 3f;
-    public float radius = 10f;
+    public float radius = 30f;
     public float explosionForce = 5000f;
     float countdown;
     bool stopChecking = false;

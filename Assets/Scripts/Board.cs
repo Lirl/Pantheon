@@ -247,15 +247,17 @@ public class Board : Photon.PunBehaviour {
 
         Debug.Log("Attempting to load prefab " + "Characters/Character" + code + " for alliance " + alliance + " isYourTurn " + isYourTurn);
         var prefab = Resources.Load("Characters/Character" + code) as GameObject;
-        var offset = (code == 3 ? 7f : 3f);
 
         GameObject ins;
         if (PhotonNetwork.connected && PhotonNetwork.inRoom) {
             ins = PhotonNetwork.Instantiate("Characters/Character" + code, hook.transform.position + new Vector3(0, 3f, 0), Quaternion.identity, 0);
         }
         else {
-            ins = Instantiate(prefab, new Vector3(hook.transform.position.x, hook.transform.position.y + 1.5f, hook.transform.position.z), Quaternion.identity);
+            ins = Instantiate(prefab, new Vector3(hook.transform.position.x, hook.transform.position.y + 3f, hook.transform.position.z), Quaternion.identity);
         }
+
+        hook.transform.position = new Vector3(hook.transform.position.x, ins.transform.position.y + ins.transform.localScale.y, hook.transform.position.z);
+
         ins.GetComponent<SpringJoint>().connectedBody = hook.GetComponent<Rigidbody>();
         ins.GetComponent<Disk>().Init(alliance, isYourTurn);
 
@@ -415,15 +417,36 @@ public class Board : Photon.PunBehaviour {
         switch (TurnCounter) {
             case 2:
 
-                // First move by the player, summon a priest
-                return 0; // groot
+                // First move by the player, summon an orc warrior
+                return 5; // 
+
+            case 4:
+
+                // First move by the player, summon an orc warrior
+                return 5; // 
+
+            case 6:
+
+                // First move by the player, summon an orc warrior
+                return 6; // 
+
+            case 8:
+
+                // First move by the player, summon an orc warrior
+                return 5; //
+
+
+            case 10:
+
+                // First move by the player, summon an orc warrior
+                return 5; //
 
             default:
                 break;
 
         }
 
-        return UnityEngine.Random.Range(0, 3);
+        return UnityEngine.Random.Range(4, 7);
     }
 
     public void AIAimDisk() {
@@ -440,17 +463,20 @@ public class Board : Photon.PunBehaviour {
             }
         });
 
-        /*Vector3 aim = (enemies[0].transform.position - hook.transform.position).normalized;
-        AIAimDiskPosition = hook.transform.position + (aim * -40);*/
+        
 
         if (TurnCounter == 2 && isTutorialShowMessages) {
             AIAimDiskPosition = new Vector3(AILastCreatedDisk.transform.position.x, AILastCreatedDisk.transform.position.y, AILastCreatedDisk.transform.position.z + 10.0f);
         }
         else {
-            AIAimDiskPosition = new Vector3(AILastCreatedDisk.transform.position.x + UnityEngine.Random.Range(-15.0f, 15.0f), AILastCreatedDisk.transform.position.y, AILastCreatedDisk.transform.position.z + UnityEngine.Random.Range(10.0f, 20.0f));
+
+            if (AILastCreatedDisk.name == "Character4") {
+                Vector3 aim = (enemies[0].transform.position - hook.transform.position).normalized;
+                AIAimDiskPosition = hook.transform.position + (aim * -40);
+            } else {
+                AIAimDiskPosition = new Vector3(AILastCreatedDisk.transform.position.x + UnityEngine.Random.Range(-15.0f, 15.0f), AILastCreatedDisk.transform.position.y, AILastCreatedDisk.transform.position.z + UnityEngine.Random.Range(10.0f, 20.0f));
+            }           
         }
-
-
 
         // So SpringJoint will not drag it out off aiming position
         AILastCreatedDisk.GetComponent<Rigidbody>().isKinematic = true;
@@ -613,8 +639,6 @@ public class Board : Photon.PunBehaviour {
         Debug.Log("Player " + (isHost ? 1 : 2) + " turn #" + TurnCounter + " YourTurn: " + isYourTurn + " isHost: " + isHost);
 
         Alert("Player " + (isHost ? 1 : 2) + " turn #" + TurnCounter);
-        // Add a new card to player hand (current turn)
-        DrawCard();
 
         // 10 seconds turn
         // TODO: add end turn indication
@@ -855,10 +879,11 @@ public class Board : Photon.PunBehaviour {
 
     private void GenerateBoard() {
         // Create deck list
+        System.Random rnd = new System.Random();
         Deck = new List<int>();
         for (int i = 0; i < 30; i++) {
             if (User.instance != null) {
-                Deck.Add(User.instance.deck[UnityEngine.Random.Range(0, User.instance.deck.Count)]); // UnityEngine.Random.Range(0, 4));
+                Deck.Add(User.instance.deck[rnd.Next(User.instance.deck.Count)]); // UnityEngine.Random.Range(0, 4));
             }
             else {
                 Deck.Add(UnityEngine.Random.Range(0, 3));
