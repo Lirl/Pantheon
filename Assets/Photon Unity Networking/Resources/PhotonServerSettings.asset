@@ -51,4 +51,5 @@ MonoBehaviour:
   - TaggedPlayer
   - PunResetTurnSlider
   - PunStartGame
+  - PunSetHealth
   DisableAutoOpenWizard: 1

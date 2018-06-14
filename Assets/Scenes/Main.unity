@@ -14457,7 +14457,7 @@ Prefab:
     - target: {fileID: 224524689759435412, guid: 1be9aea21fbe75d4eaac9b5b6ea0da99,
         type: 2}
       propertyPath: m_AnchorMax.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 1be9aea21fbe75d4eaac9b5b6ea0da99, type: 2}
@@ -50546,7 +50546,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!225 &1257966344
 CanvasGroup:
   m_ObjectHideFlags: 0
