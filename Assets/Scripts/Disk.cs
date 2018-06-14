@@ -42,8 +42,8 @@ public class Disk : Photon.PunBehaviour {
 
     public int Alliance;
 
-    public double Health = -1;
-    public double TotalHealth = -1;
+    public double Health;
+    public double TotalHealth;
 
     public int Attack = 1;
     public int Id = -1;
@@ -123,12 +123,15 @@ public class Disk : Photon.PunBehaviour {
 
         mesh = SJ.connectedBody.GetComponent<MeshRenderer>();
         line.SetPosition(0, SJ.connectedBody.position);
-        if (Health == -1) {
-            Health = 3;
-            TotalHealth = 3;
-        }
+
+        // Health bar settings
+        Debug.Log("Init " + name + " with health " + Health + " of total " + TotalHealth);
+        
+        HealthBar.maxValue = (float)TotalHealth;
+        HealthBar.minValue = 0;
 
         HealthBar.value = (float)Health;
+
         Id = GenerateId();
         HeightOffSet = (Id == 3) ? 0.1f : 0;
         Board.Instance.SaveDisk(Id, this);
