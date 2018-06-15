@@ -77,10 +77,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d0bad2798005b2b4e9088d09f68956f2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Code: 0
-  Name: Priest
-  Description: 
-  PrefabName: Priest
+  Code: 4
+  Name: Shaman
 --- !u!114 &114391577574424338
 MonoBehaviour:
   m_ObjectHideFlags: 1

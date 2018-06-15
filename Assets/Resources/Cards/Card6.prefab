@@ -315,10 +315,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d0bad2798005b2b4e9088d09f68956f2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Code: 2
-  Name: Wizard
-  Description: 
-  PrefabName: Wizard
+  Code: 6
+  Name: Warlord
 --- !u!222 &222363038635653620
 CanvasRenderer:
   m_ObjectHideFlags: 1

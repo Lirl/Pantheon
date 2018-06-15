@@ -21,7 +21,7 @@ public class AudioManager : MonoBehaviour {
     public void Play(string name) {
         Sound s = Array.Find(sounds, sound => sound.name == name);
         s.src.Play();
-        Debug.Log("Played Sound");
+        //Debug.Log("Played Sound");
     }
 
     public void PlayFor(string name, float time) {
