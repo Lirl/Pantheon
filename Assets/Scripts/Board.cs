@@ -639,6 +639,8 @@ public class Board : Photon.PunBehaviour {
 
         Alert("Player " + (isHost ? 1 : 2) + " turn #" + TurnCounter);
 
+        DrawCard();
+
         // 10 seconds turn
         // TODO: add end turn indication
         Debug.Log("Invoke EndTurn " + (isYourTurn ? "your turn" : "not your turn"));
