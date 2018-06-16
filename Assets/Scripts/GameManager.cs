@@ -79,7 +79,7 @@ public class GameManager : Photon.PunBehaviour {
 
 
         // UI Setup
-        Debug.Log("GameManager Init");
+        //Debug.Log("GameManager Init");
 
         mainMenu = GameObject.Find("MainMenu");
         serverMenu = GameObject.Find("Host");
@@ -92,7 +92,7 @@ public class GameManager : Photon.PunBehaviour {
             connectMenu.SetActive(false);
         }
 
-        Debug.Log("serverMenu " + serverMenu);
+        //Debug.Log("serverMenu " + serverMenu);
     }
 
     #endregion
@@ -229,7 +229,7 @@ public class GameManager : Photon.PunBehaviour {
     }
 
     public void OnLevelWasLoaded() {
-        Debug.Log("OnLevelWasLoaded ");        
+        //Debug.Log("OnLevelWasLoaded ");        
         mainMenu = GameObject.Find("MainMenu");
         serverMenu = GameObject.Find("Host");
         connectMenu = GameObject.Find("Connect");

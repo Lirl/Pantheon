@@ -11,6 +11,8 @@ TagManager:
   - Character3
   - UIPrefab
   - God
+  - Menu
+  - CardUI
   layers:
   - Default
   - TransparentFX
