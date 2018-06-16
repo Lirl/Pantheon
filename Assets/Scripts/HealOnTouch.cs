@@ -23,6 +23,7 @@ public class HealOnTouch : MonoBehaviour {
             Debug.Log("HealOnTouch Same Alliance");
             // Where -1 is to full health, where 0 and positive heal that amout
             disk.SetHealth((HealAmount == -1) ? disk.TotalHealth : Math.Min(HealAmount + disk.Health, disk.TotalHealth));
+            EffectManager.PlayEffect("MinorHeal", disk.gameObject.transform.position, disk.gameObject);
         }
     }
 

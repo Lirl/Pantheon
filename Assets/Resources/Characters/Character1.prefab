@@ -456,8 +456,8 @@ MonoBehaviour:
   mesh: {fileID: 0}
   Buffs: []
   Alliance: 0
-  Health: 3
-  TotalHealth: 3
+  Health: 4
+  TotalHealth: 4
   Attack: 2
   Id: 1
   classType: 1
