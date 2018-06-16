@@ -6,9 +6,9 @@ using UnityEngine;
 public class AudioManager : MonoBehaviour {
 
     public Sound[] sounds;
-
+    public static AudioManager Instance;
     void Awake() {
-        
+        Instance = this;
         foreach (Sound s in sounds) {
             s.src = gameObject.AddComponent<AudioSource>();
             s.src.clip = s.clip;

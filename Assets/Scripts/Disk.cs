@@ -21,8 +21,6 @@ public class Disk : Photon.PunBehaviour {
 
     public List<DiskReleaseHandler> OnDiskRelease = new List<DiskReleaseHandler>();
 
-    public AudioManager AudioManager;
-
     LineRenderer line;
     public SpringJoint SJ;
     public MeshRenderer mesh;
@@ -69,7 +67,8 @@ public class Disk : Photon.PunBehaviour {
     }
 
     public void Init(int alliance) {
-        AudioManager = GameObject.FindObjectOfType<AudioManager>();
+
+
         if (PhotonNetwork.connected && PhotonNetwork.inRoom) {
             PhotonView photonView = PhotonView.Get(this);
             photonView.RPC("PunInit", PhotonTargets.All, alliance);
@@ -293,10 +292,10 @@ public class Disk : Photon.PunBehaviour {
             Debug.Log("Didnt find powerUp");
         }
         if (!disk) {
-            AudioManager.Play("Wall Hit");
+            AudioManager.Instance.Play("Wall Hit");
         }
         else {
-            AudioManager.Play("Disk Hit");
+            AudioManager.Instance.Play("Disk Hit");
         }
 
 
