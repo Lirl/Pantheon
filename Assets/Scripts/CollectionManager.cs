@@ -125,9 +125,13 @@ public class CollectionManager : MonoBehaviour {
 
     private void Glow(bool glow) {
         var section = (firstClickedIsOnDeck == true) ? Cards : Deck;
-        var children = section.GetComponentsInChildren<Outline>();
+        //var children = section.GetComponentsInChildren<Outline>();
+        var children = section.GetComponentsInChildren<Transform>();
         for (int i = 0; i < children.Length; i++) {
-            children[i].enabled = glow;
+            if (children[i].tag == "CardUI") {
+                //StartCoroutine(Shake(duration, magnitude, children[i]));
+            }
+            //StartCoroutine(Shake(duration, magnitude, children[i]));
         }
     }
 
@@ -150,9 +154,10 @@ public class CollectionManager : MonoBehaviour {
         user.Save();
     }
 
-    IEnumerator Shake(float duration, float magnitude, GameObject go) {
-        Vector3 originalPosition = go.transform.position;
-
+    /*
+    IEnumerator Shake(float duration, float magnitude, Transform go) {
+        Vector3 originalPosition = go.position;
+        var childImage = go.GetComponentInChildren<Transform>();
         float elapsed = 0.0f;
 
         while(elapsed < duration) {
@@ -160,10 +165,13 @@ public class CollectionManager : MonoBehaviour {
             float x = UnityEngine.Random.Range(-1, 1) * magnitude;
             float y = UnityEngine.Random.Range(-1, 1) * magnitude;
 
-            go.transform.position = new Vector3(x, y, originalPosition.z);
+            go.Rotate(new Vector3(originalPosition.x + x, originalPosition.y + y, originalPosition.z));
+            //go.position = new Vector3(originalPosition.x + x, originalPosition.y + y, originalPosition.z);
+            //childImage.position = new Vector3(originalPosition.x + x, originalPosition.y + y, originalPosition.z);
             elapsed += Time.deltaTime;
 
-            yield return null;
+            yield return new WaitForSeconds(0.05f);
         }
-    }
+        go.position = originalPosition;
+    }*/
 }
