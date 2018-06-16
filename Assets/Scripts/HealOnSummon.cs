@@ -21,7 +21,7 @@ public class HealOnSummon : MonoBehaviour {
             for (int i = 0; i < disks.Count; i++) {
                 var disk = disks[i];
                 if (disk != self) {
-                    disk.SetHealth((HealAmount == -1) ? disk.TotalHealth : Math.Min(HealAmount + disk.Health, disk.TotalHealth));
+                    disk.SetHealth((HealAmount == -1) ? disk.TotalHealth : System.Math.Min(HealAmount + disk.Health, disk.TotalHealth));
                     EffectManager.PlayEffect("MinorHeal", disk.gameObject.transform.position, disk.gameObject);
                 }
             }

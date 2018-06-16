@@ -12,6 +12,7 @@ public class UseCard : MonoBehaviour {
     private User user;
 
     public TextMeshProUGUI use;
+    public TextMeshProUGUI Gold;
 
     private void Start() {
         user = FindObjectOfType<User>();
@@ -38,6 +39,7 @@ public class UseCard : MonoBehaviour {
             user.disks.Add(code);
             user.gold -= cost;
             card.transform.parent = cm.Cards.transform;
+            Gold.text = "Gold: " + user.gold.ToString();
         }
     }
 }

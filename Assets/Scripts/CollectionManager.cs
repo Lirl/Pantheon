@@ -3,26 +3,33 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class CollectionManager : MonoBehaviour {
 
     [SerializeField]
     private User user;
+
+    [Header("GameObjects For Reference")]
     public GameObject Deck;
     public GameObject Cards;
     public GameObject Store;
     public GameObject CollectionsMenu;
     public GameObject StoreMenu;
-    public UseCard lastClickedCard; 
+    public TextMeshProUGUI Gold;
+     
+    
 
+    public GameObject god;
+    public Image image;
     public GameObject[] Descriptions;
     public GameObject alreadyInUse;
     public Sprite[] God;
 
+    [Header("Booleans for card switching")]
     public bool firstCardClicked = false;
     public bool firstClickedIsOnDeck;
-    public GameObject god;
-    public Image image;
+    public UseCard lastClickedCard;
 
     [Header("Shake Values")]
     [Range(0, 10f)]
@@ -39,6 +46,11 @@ public class CollectionManager : MonoBehaviour {
             //Debug.Log("Card " + user.deck[i]);
             var card = GameObject.Find("" + user.deck[i]);
             card.transform.parent = Deck.transform;
+        }
+        for (int i = 0; i < user.disks.Count; i++) {
+            //Debug.Log("Card " + user.disks[i]);
+            var card = GameObject.Find("" + user.disks[i]);
+            card.transform.parent = Cards.transform;
         }
         foreach (GameObject go in Descriptions) {
             var useCard = go.GetComponentInChildren<UseCard>();
@@ -67,6 +79,7 @@ public class CollectionManager : MonoBehaviour {
             user.disks.Add(useCard.code);
             user.gold -= useCard.cost;
             transform.parent = Deck.transform;
+            Gold.text = "Gold: " + user.gold.ToString();
         }
     }
 
