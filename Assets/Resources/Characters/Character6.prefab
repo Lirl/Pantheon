@@ -457,7 +457,7 @@ MonoBehaviour:
   Alliance: 0
   Health: 1
   TotalHealth: 1
-  Attack: 3
+  Attack: 2
   Id: 2
   classType: 2
   Enable: 1

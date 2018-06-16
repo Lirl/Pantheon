@@ -519,9 +519,10 @@ MonoBehaviour:
   AudioManager: {fileID: 0}
   SJ: {fileID: 0}
   mesh: {fileID: 0}
+  Buffs: []
   Alliance: 0
-  Health: 4
-  TotalHealth: 4
+  Health: 6
+  TotalHealth: 6
   Attack: 3
   Id: 0
   classType: 0

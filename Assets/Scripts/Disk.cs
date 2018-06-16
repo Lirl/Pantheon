@@ -26,24 +26,13 @@ public class Disk : Photon.PunBehaviour {
     LineRenderer line;
     public SpringJoint SJ;
     public MeshRenderer mesh;
-    public List<string> Buffs = new List<string>();
 
-    internal void AddBuff(string v) {
-        Buffs.Add(v);
-    }
 
-    internal bool hasBuff(string v) {
-        return Buffs.Contains(v);
-    }
-
-    internal void RemoveBuff(string v) {
-        Buffs.Remove(v);
-    }
 
     public int Alliance;
 
-    public double Health = -1;
-    public double TotalHealth = -1;
+    public double Health;
+    public double TotalHealth;
 
     public int Attack = 1;
     public int Id = -1;
@@ -123,12 +112,15 @@ public class Disk : Photon.PunBehaviour {
 
         mesh = SJ.connectedBody.GetComponent<MeshRenderer>();
         line.SetPosition(0, SJ.connectedBody.position);
-        if (Health == -1) {
-            Health = 3;
-            TotalHealth = 3;
-        }
+
+        // Health bar settings
+        Debug.Log("Init " + name + " with health " + Health + " of total " + TotalHealth);
+        
+        HealthBar.maxValue = (float)TotalHealth;
+        HealthBar.minValue = 0;
 
         HealthBar.value = (float)Health;
+
         Id = GenerateId();
         HeightOffSet = (Id == 3) ? 0.1f : 0;
         Board.Instance.SaveDisk(Id, this);
@@ -315,6 +307,10 @@ public class Disk : Photon.PunBehaviour {
 
         // Alliance is current player alliance
         if (disk.Alliance != Alliance) {
+
+            // Play hit effect
+            EffectManager.PlayHitEffect(collision.contacts[0].point);
+
             if (classType == ClassType.Rock) {
                 if (disk.classType == ClassType.Paper) {
                     disk.DealDamage(Attack * 0.5);
@@ -419,8 +415,8 @@ public class Disk : Photon.PunBehaviour {
 
 
     internal void Shrink(float ratio) {
-        _enlargeScaleX = gameObject.transform.localScale.x / ratio;
-        _enlargeScaleZ = gameObject.transform.localScale.z / ratio;
+        _shrinkScaleX = gameObject.transform.localScale.x / ratio;
+        _shrinkScaleZ = gameObject.transform.localScale.z / ratio;
         enlarge = -1;
     }
 
@@ -440,8 +436,77 @@ public class Disk : Photon.PunBehaviour {
         }
     }
 
+    #region Buffs Handling
+
+    public class Buff {
+        public string Name;
+        public List<GameObject> Effects = new List<GameObject>();
+        public Buff(string name) {
+            Name = name;
+        }
+
+        public Buff(string name, GameObject effect) {
+            Name = name;
+            Effects.Add(effect);
+        }
+
+        public Buff(string name, List<GameObject> effects) {
+            Name = name;
+            Effects.AddRange(effects);
+        }
+    }
+
+    public List<Buff> Buffs = new List<Buff>();
+
+    internal void AddBuff(string v) {
+        Buffs.Add(new Buff(v));
+    }
+
+    internal void AddBuff(string v, GameObject effect) {
+        Buffs.Add(new Buff(v, effect));
+    }
+
+    internal void AddBuff(string v, List<GameObject> effects) {
+        Buffs.Add(new Buff(v, effects));
+    }
+
+    internal bool hasBuff(string v) {
+        for (int i = 0; i < Buffs.Count; i++) {
+            if (Buffs[i].Name == v) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    internal void RemoveBuff(string v) {
+
+        if(!hasBuff(v)) {
+            return;
+        }
+
+        for (int i = 0; i < Buffs.Count; i++) {
+            if (Buffs[i].Name == v) {
+
+                // Remove any effec associated with this 
+                for (int j = 0; j < Buffs[i].Effects.Count; j++) {
+                    var e = Buffs[i].Effects[j];
+                    if (e.GetComponent<PhotonView>()) {
+                        PhotonNetwork.Destroy(e);
+                    } else {
+                        Destroy(e);
+                    }
+                }
+            }
+        }
+    }
+
+    #endregion
+
     void OnDestroy() {
         Debug.Log("Disk " + Id + " destroyed");
     }
+
+
 
 }

@@ -6,8 +6,8 @@ using UnityEngine;
 public class Granade : MonoBehaviour {
 
     public float delay = 3f;
-    public float radius = 30f;
-    public float explosionForce = 5000f;
+    public float radius = 15f;
+    public float explosionForce = 1500f;
     float countdown;
     bool stopChecking = false;
     bool hasExploaded = false;

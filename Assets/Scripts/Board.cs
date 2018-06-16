@@ -26,7 +26,6 @@ public class Board : Photon.PunBehaviour {
     public const int MAP_WIDTH_REAL = 20;
     public const int MAP_HEIGHT_REAL = 30;
 
-
     public void StartGame() {
         if(PhotonNetwork.connected && PhotonNetwork.inRoom) {
             PhotonView photonView = PhotonView.Get(this);
@@ -423,7 +422,7 @@ public class Board : Photon.PunBehaviour {
             case 4:
 
                 // First move by the player, summon an orc warrior
-                return 5; // 
+                return 4; // 
 
             case 6:
 
