@@ -303,12 +303,12 @@ public class Disk : Photon.PunBehaviour {
             return;
         }
 
-
+        // Play hit effect
+        EffectManager.PlayHitEffect(collision.contacts[0].point);
         // Alliance is current player alliance
         if (disk.Alliance != Alliance) {
 
-            // Play hit effect
-            EffectManager.PlayHitEffect(collision.contacts[0].point);
+            
 
             if (classType == ClassType.Rock) {
                 if (disk.classType == ClassType.Paper) {
