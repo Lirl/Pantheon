@@ -10,6 +10,10 @@ public class GodSelector : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
         user = GameObject.FindObjectOfType<User>();
-
+    }
+    
+    public void SetGod() {
+        user.god = code;
+        user.Save();
     }
 }

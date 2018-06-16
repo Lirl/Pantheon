@@ -24,7 +24,7 @@ TagManager:
   - 
   - Hook
   - Disk
-  - 
+  - UI2
   - 
   - 
   - 
@@ -50,12 +50,12 @@ TagManager:
   - name: Default
     uniqueID: 0
     locked: 0
-  - name: UpperMap
-    uniqueID: 1613738825
-    locked: 0
-  - name: Lower Map
-    uniqueID: 3785616819
-    locked: 0
   - name: Hook
     uniqueID: 1133574795
+    locked: 0
+  - name: UI2
+    uniqueID: 2522217721
+    locked: 0
+  - name: UI
+    uniqueID: 3645598983
     locked: 0
