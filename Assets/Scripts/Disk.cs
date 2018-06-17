@@ -114,7 +114,7 @@ public class Disk : Photon.PunBehaviour {
 
         // Health bar settings
         Debug.Log("Init " + name + " with health " + Health + " of total " + TotalHealth);
-        
+
         HealthBar.maxValue = (float)TotalHealth;
         HealthBar.minValue = 0;
 
@@ -146,14 +146,17 @@ public class Disk : Photon.PunBehaviour {
             if (gameObject.transform.localScale.x < _enlargeScaleX && gameObject.transform.localScale.z < _enlargeScaleZ) {
                 gameObject.transform.position += new Vector3(0, 0.05f, 0);
                 gameObject.transform.localScale += new Vector3(0.1f, 0, 0.1f);
-            } else {
+            }
+            else {
                 enlarge = 0;
             }
-        } else if (enlarge < 0) {
+        }
+        else if (enlarge < 0) {
             if (gameObject.transform.localScale.x > _shrinkScaleX && gameObject.transform.localScale.z > _shrinkScaleZ) {
                 gameObject.transform.position -= new Vector3(0, 0.05f, 0);
                 gameObject.transform.localScale -= new Vector3(0.1f, 0, 0.1f);
-            } else {
+            }
+            else {
                 enlarge = 0;
             }
         }
@@ -265,6 +268,7 @@ public class Disk : Photon.PunBehaviour {
 
     public void StopMoving() {
         Rigidbody.velocity = Vector3.zero;
+        Rigidbody.mass = Rigidbody.mass * 1.6f;
     }
 
     IEnumerator UnHook() {
@@ -303,12 +307,11 @@ public class Disk : Photon.PunBehaviour {
             return;
         }
 
-        // Play hit effect
-        EffectManager.PlayHitEffect(collision.contacts[0].point);
         // Alliance is current player alliance
         if (disk.Alliance != Alliance) {
 
-            
+            // Play hit effect
+            EffectManager.Instance.PlayHitEffect(collision.contacts[0].point);
 
             if (classType == ClassType.Rock) {
                 if (disk.classType == ClassType.Paper) {
@@ -382,7 +385,8 @@ public class Disk : Photon.PunBehaviour {
         if (PhotonNetwork.connected && PhotonNetwork.inRoom) {
             PhotonView photonView = PhotonView.Get(this);
             photonView.RPC("PunSetHealth", PhotonTargets.All, health);
-        } else {
+        }
+        else {
             PunSetHealth(health);
         }
     }
@@ -426,7 +430,6 @@ public class Disk : Photon.PunBehaviour {
     }
 
     public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info) {
-        Debug.Log("Board Sync OnPhotonSerializeView " + stream.isWriting);
         if (stream.isWriting) {
             stream.SendNext(Alliance);
         }
@@ -480,7 +483,7 @@ public class Disk : Photon.PunBehaviour {
 
     internal void RemoveBuff(string v) {
 
-        if(!hasBuff(v)) {
+        if (!hasBuff(v)) {
             return;
         }
 
@@ -490,9 +493,7 @@ public class Disk : Photon.PunBehaviour {
                 // Remove any effec associated with this 
                 for (int j = 0; j < Buffs[i].Effects.Count; j++) {
                     var e = Buffs[i].Effects[j];
-                    if (e.GetComponent<PhotonView>()) {
-                        PhotonNetwork.Destroy(e);
-                    } else {
+                    if (e) {
                         Destroy(e);
                     }
                 }
@@ -505,7 +506,4 @@ public class Disk : Photon.PunBehaviour {
     void OnDestroy() {
         Debug.Log("Disk " + Id + " destroyed");
     }
-
-
-
 }

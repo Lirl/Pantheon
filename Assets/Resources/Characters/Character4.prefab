@@ -107,12 +107,11 @@ GameObject:
   - component: {fileID: 114709557172738300}
   - component: {fileID: 120469212265586254}
   - component: {fileID: 135837388180797902}
-  - component: {fileID: 114003776871604322}
   - component: {fileID: 96047870711532078}
   - component: {fileID: 114732323386775142}
   - component: {fileID: 114370191224876896}
   - component: {fileID: 114462162554884370}
-  - component: {fileID: 114215738133235064}
+  - component: {fileID: 114275511659912362}
   m_Layer: 9
   m_Name: Character4
   m_TagString: Untagged
@@ -144,8 +143,8 @@ Transform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1760844136437484}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -14.454872, y: -2.95, z: -1.8709145}
-  m_LocalScale: {x: 6, y: 0.1, z: 6}
+  m_LocalPosition: {x: 1.880214, y: 4.31, z: -14.2572565}
+  m_LocalScale: {x: 4, y: 0.1, z: 4}
   m_Children:
   - {fileID: 224103826874024108}
   - {fileID: 4110567998416830}
@@ -227,8 +226,8 @@ Rigidbody:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1760844136437484}
   serializedVersion: 2
-  m_Mass: 1
-  m_Drag: 1
+  m_Mass: 0.8
+  m_Drag: 0.5
   m_AngularDrag: 0.05
   m_UseGravity: 1
   m_IsKinematic: 0
@@ -328,32 +327,6 @@ TrailRenderer:
     generateLightingData: 0
   m_MinVertexDistance: 0.1
   m_Autodestruct: 0
---- !u!114 &114003776871604322
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1760844136437484}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 890fe0128d71f9440853a1570c43ebac, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  delay: 3
-  radius: 9.5
-  explosionEffect: {fileID: 1000011128802252, guid: 96730f8640590934eacb6f860058e7f9,
-    type: 2}
---- !u!114 &114215738133235064
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1760844136437484}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ffabde204104c4d4c993ba67d5853a29, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &114257422973586158
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -381,6 +354,18 @@ MonoBehaviour:
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
+--- !u!114 &114275511659912362
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1760844136437484}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b4ca881da8e911f428f14a744a39c492, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  HealAmount: -1
 --- !u!114 &114370191224876896
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -516,10 +501,8 @@ MonoBehaviour:
   endTurn: 1
   HealthBar: {fileID: 114939189428847304}
   HeightOffSet: 0
-  AudioManager: {fileID: 0}
   SJ: {fileID: 0}
   mesh: {fileID: 0}
-  Buffs: []
   Alliance: 0
   Health: 6
   TotalHealth: 6
@@ -714,7 +697,7 @@ SpringJoint:
   m_ConnectedBody: {fileID: 0}
   m_Anchor: {x: 0, y: 1, z: 0}
   m_AutoConfigureConnectedAnchor: 1
-  m_ConnectedAnchor: {x: -14.454872, y: -2.8500001, z: -1.8709145}
+  m_ConnectedAnchor: {x: 1.880214, y: 4.41, z: -14.2572565}
   serializedVersion: 2
   m_Spring: 20
   m_Damper: 0.2

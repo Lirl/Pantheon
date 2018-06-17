@@ -92,7 +92,6 @@ GameObject:
   - component: {fileID: 120596178856406444}
   - component: {fileID: 135234110858393154}
   - component: {fileID: 96970322774635552}
-  - component: {fileID: 114288838822539892}
   - component: {fileID: 114612498742494352}
   - component: {fileID: 114393765943328510}
   - component: {fileID: 114927771564185570}
@@ -393,10 +392,8 @@ MonoBehaviour:
   endTurn: 1
   HealthBar: {fileID: 114108540358654092}
   HeightOffSet: 0
-  AudioManager: {fileID: 0}
   SJ: {fileID: 0}
   mesh: {fileID: 0}
-  Buffs: []
   Alliance: 0
   Health: 3
   TotalHealth: 3
@@ -406,22 +403,6 @@ MonoBehaviour:
   Enable: 1
   _released: 0
   _forcedRelease: 0
---- !u!114 &114288838822539892
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1246344725204486}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c29a4b00c53479240b9c606edfd718ad, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  delay: 3
-  radius: 20
-  explosionForce: 5000
-  explosionEffect: {fileID: 1000011797152326, guid: acf39d9f4addf294d93fa56fa373961b,
-    type: 2}
 --- !u!114 &114365219245444402
 MonoBehaviour:
   m_ObjectHideFlags: 1

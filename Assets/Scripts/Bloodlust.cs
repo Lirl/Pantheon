@@ -16,14 +16,14 @@ public class Bloodlust : MonoBehaviour {
     public void Init() {
         self = GetComponent<Disk>();
 
-        EffectManager.PlayEffect("BloodlustCaster", transform.position, gameObject);
+        EffectManager.Instance.PlayEffect("BloodlustCaster", transform.position, gameObject);
 
         self.OnDiskRelease.Add(delegate () {
             var disks = Board.Instance.DisksList.FindAll(disk => disk && disk.gameObject && disk.Alliance == self.Alliance);
             for (int i = 0; i < disks.Count; i++) {
                 disks[i].Enlarge(2);
                 if(disks[i] != self) {
-                    var ins = EffectManager.PlayEffect("Bloodlust", disks[i].transform.position, disks[i].gameObject);
+                    var ins = EffectManager.Instance.PlayEffect("Bloodlust", disks[i].transform.position, disks[i].gameObject);
                     disks[i].AddBuff("Bloodlust", ins);
                 }
             }

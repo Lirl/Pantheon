@@ -7,6 +7,7 @@ using System;
 using UnityEngine.EventSystems;
 using System.Text;
 using Photon;
+using TMPro;
 
 public class Board : Photon.PunBehaviour {
     public static Board Instance { set; get; }
@@ -44,6 +45,9 @@ public class Board : Photon.PunBehaviour {
         for (int i = 0; i < 2; i++) {
             DrawCard();
         }
+        //Card.CreateCard(7, Hand.transform);
+        //Card.CreateCard(7, Hand.transform);
+        //Card.CreateCard(7, Hand.transform);
 
         started = true;
 
@@ -60,11 +64,12 @@ public class Board : Photon.PunBehaviour {
         }
         else if (isHost) {
             // Host starts
-            Invoke("CheckWinner", gameTime);
+
             StartTurn();
             Invoke("CreatePowerUp", 20f);
         }
 
+        Invoke("CheckWinner", gameTime);
         Invoke("MovePillars", 4f);
         Invoke("TurnDownTheLights", 60f);
         Invoke("StartTheFire", 80f);
@@ -187,12 +192,12 @@ public class Board : Photon.PunBehaviour {
 
         Alert(isHost ? "I am Host" : "I am Client");
 
-        yourScore.GetComponentInChildren<Text>().color = isHost ? Color.blue : Color.red;
-        yourColor = yourScore.GetComponentInChildren<Text>().color;
-        yourScore.GetComponentInChildren<Text>().text = "0";
-        opponentScore.GetComponentInChildren<Text>().color = isHost ? Color.red : Color.blue;
-        opponentColor = opponentScore.GetComponentInChildren<Text>().color;
-        opponentScore.GetComponentInChildren<Text>().text = "0";
+        yourScore.GetComponentInChildren<TextMeshProUGUI>().color = isHost ? Color.white : Color.white;
+        yourColor = yourScore.GetComponentInChildren<TextMeshProUGUI>().color;
+        yourScore.GetComponentInChildren<TextMeshProUGUI>().text = "0";
+        opponentScore.GetComponentInChildren<TextMeshProUGUI>().color = isHost ? Color.white : Color.white;
+        opponentColor = opponentScore.GetComponentInChildren<TextMeshProUGUI>().color;
+        opponentScore.GetComponentInChildren<TextMeshProUGUI>().text = "0";
 
         // Client player has its camera rotate 180 degrees
         if (!isHost) {
@@ -763,30 +768,30 @@ public class Board : Photon.PunBehaviour {
         }
 
         if (isTutorialDontShowTime) {
-            TimeMessage.GetComponentInChildren<Text>().text = "";
+            TimeMessage.GetComponentInChildren<TextMeshProUGUI>().text = "";
         }
         else if (gameTime >= 0 && !gameIsOver) {
-            TimeMessage.GetComponentInChildren<Text>().text = Math.Floor(gameTime).ToString();
+            TimeMessage.GetComponentInChildren<TextMeshProUGUI>().text = Math.Floor(gameTime).ToString();
         }
 
         if (isTutorial) {
-            yourScore.GetComponentInChildren<Text>().text = Score[1].ToString();
-            opponentScore.GetComponentInChildren<Text>().text = Score[0].ToString();
+            yourScore.GetComponentInChildren<TextMeshProUGUI>().text = Score[1].ToString();
+            opponentScore.GetComponentInChildren<TextMeshProUGUI>().text = Score[0].ToString();
         }
         else {
-            yourScore.GetComponentInChildren<Text>().text = Score[isHost ? 1 : 0].ToString();
-            opponentScore.GetComponentInChildren<Text>().text = Score[isHost ? 0 : 1].ToString();
+            yourScore.GetComponentInChildren<TextMeshProUGUI>().text = Score[isHost ? 1 : 0].ToString();
+            opponentScore.GetComponentInChildren<TextMeshProUGUI>().text = Score[isHost ? 0 : 1].ToString();
         }
 
         var _prevLead = LeadingPlayer();
         if (_prevLead > -1) {
             if (_prevLead == (isHost || isTutorial ? 1 : 0)) {
-                yourScore.GetComponentInChildren<Text>().color = Color.Lerp(Color.white, yourColor, Mathf.PingPong(Time.time, 1));
-                opponentScore.GetComponentInChildren<Text>().color = opponentColor;
+                yourScore.GetComponentInChildren<TextMeshProUGUI>().color = Color.Lerp(Color.yellow, yourColor, Mathf.PingPong(Time.time, 1));
+                opponentScore.GetComponentInChildren<TextMeshProUGUI>().color = opponentColor;
             }
             else {
-                opponentScore.GetComponentInChildren<Text>().color = Color.Lerp(Color.white, opponentColor, Mathf.PingPong(Time.time, 1));
-                yourScore.GetComponentInChildren<Text>().color = yourColor;
+                opponentScore.GetComponentInChildren<TextMeshProUGUI>().color = Color.Lerp(Color.yellow, opponentColor, Mathf.PingPong(Time.time, 1));
+                yourScore.GetComponentInChildren<TextMeshProUGUI>().color = yourColor;
             }
         }
 
@@ -821,12 +826,8 @@ public class Board : Photon.PunBehaviour {
         int y = UnityEngine.Random.Range(1, MAP_HEIGHT_REAL - 1);
         int code = UnityEngine.Random.Range(0, powerUpsAmount);
 
-        if (PhotonNetwork.connected && PhotonNetwork.inRoom) {
-            photonView.RPC("PunHandleCreatePowerUp", PhotonTargets.All, code, x, y);
-        }
-        else {
-            PunHandleCreatePowerUp(code, x, y);
-        }
+        PunHandleCreatePowerUp(code, x, y);
+        
     }
 
     [PunRPC]

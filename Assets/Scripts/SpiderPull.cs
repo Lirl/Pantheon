@@ -51,8 +51,8 @@ public class SpiderPull : MonoBehaviour {
             }
 
             line.material = Resources.Load("Materials/ColorWhite", typeof(Material)) as Material;
-            line.startColor = new Color(255, 255, 255, 255f);
-            line.endColor = new Color(255, 255, 255, 255f);
+            //line.startColor = new Color(255, 255, 255, 255f);
+            //line.endColor = new Color(255, 255, 255, 255f);
             line.startWidth = 0.5f;
             line.endWidth = 0.7f;
 

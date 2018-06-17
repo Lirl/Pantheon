@@ -37,7 +37,10 @@ public class Explosion : MonoBehaviour {
     }
 
     private void Explode() {
-        if(!Board.Instance.isYourTurn) {
+
+        EffectManager.Instance.PlayEffect("MageCast", transform.position, null);
+
+        if (!Board.Instance.isYourTurn) {
             return;
         }
 
@@ -50,6 +53,5 @@ public class Explosion : MonoBehaviour {
                 Board.Instance.HandleSetTileAlliance(disk.Alliance, cube.X, cube.Y);
             }
         }
-        Instantiate(explosionEffect, transform.position, Quaternion.identity);
     }
 }

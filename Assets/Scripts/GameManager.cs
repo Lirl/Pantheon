@@ -239,6 +239,8 @@ public class GameManager : Photon.PunBehaviour {
 
         var hotseat = GameObject.Find("HotSeat");
         hotseat.GetComponent<Button>().onClick.AddListener(HotseatButton);
+        var cancelButton = serverMenu.GetComponentInChildren<Button>();
+        cancelButton.GetComponent<Button>().onClick.AddListener(LeaveRoom);
         var Train = GameObject.Find("Train");
         Train.GetComponent<Button>().onClick.AddListener(StartGame);
     }

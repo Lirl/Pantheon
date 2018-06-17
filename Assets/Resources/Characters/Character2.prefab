@@ -113,7 +113,7 @@ GameObject:
   - component: {fileID: 114243380018487982}
   - component: {fileID: 114352635714383614}
   - component: {fileID: 96818502232260492}
-  - component: {fileID: 114864418686992952}
+  - component: {fileID: 114866829117211076}
   m_Layer: 9
   m_Name: Character2
   m_TagString: Untagged
@@ -143,7 +143,7 @@ Transform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1731752532988852}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 9.655807, y: -2.95, z: -5.8239675}
+  m_LocalPosition: {x: -8.430747, y: 7.56, z: -16.784225}
   m_LocalScale: {x: 4, y: 0.1, z: 4}
   m_Children:
   - {fileID: 4821790170370498}
@@ -490,7 +490,6 @@ MonoBehaviour:
   endTurn: 1
   HealthBar: {fileID: 114989196083884350}
   HeightOffSet: 0
-  AudioManager: {fileID: 0}
   SJ: {fileID: 0}
   mesh: {fileID: 0}
   Alliance: 0
@@ -529,7 +528,7 @@ MonoBehaviour:
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
---- !u!114 &114864418686992952
+--- !u!114 &114866829117211076
 MonoBehaviour:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
@@ -537,10 +536,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 1731752532988852}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b4ca881da8e911f428f14a744a39c492, type: 3}
+  m_Script: {fileID: 11500000, guid: b51bbcaa8bed2ac41bb694625c21dc5b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  HealAmount: -1
+  HealAmount: 2
 --- !u!114 &114989196083884350
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -698,7 +697,7 @@ SpringJoint:
   m_ConnectedBody: {fileID: 0}
   m_Anchor: {x: 0, y: 1, z: 0}
   m_AutoConfigureConnectedAnchor: 1
-  m_ConnectedAnchor: {x: 9.655807, y: -2.8500001, z: -5.8239675}
+  m_ConnectedAnchor: {x: -8.430747, y: -2.9, z: -16.784225}
   serializedVersion: 2
   m_Spring: 20
   m_Damper: 0.2

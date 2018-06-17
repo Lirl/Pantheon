@@ -2,11 +2,12 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class ReadySetGo : MonoBehaviour {
 
     string[] shoutout = new string[] { "Set", "Go!" };
-    public Text text;
+    public TextMeshProUGUI text;
     private int index;
     int textSize;
     private bool flag = true;
@@ -24,11 +25,11 @@ public class ReadySetGo : MonoBehaviour {
             return;
         }
 
-        if (text.fontSize <= 24) {
-            text.fontSize += 1;
+        if (text.fontSize <= 80) {
+            text.fontSize += 5f;
         }
 
-        if (text.fontSize > 24 && flag) {
+        if (text.fontSize > 80 && flag) {
 
             flag = false;
             Invoke("ChangeText", 1);
